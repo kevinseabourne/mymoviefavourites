@@ -63,14 +63,6 @@ export default function App({ Component, pageProps }) {
     });
 
     return relatedGenres;
-
-    // add the backslash to each genre
-    // let genreSlash = genresArray.map((g) => {
-    //   return g + " /";
-    // });
-    // combine all strings into one, turn it to lowecase and delete the last character - "/"
-    // let genreJoin = genreSlash.join(" ").toLowerCase().slice(0, -1);
-    // return genreJoin;
   };
 
   const handleSelectedMovie = (selectedMovie) => {

@@ -1,8 +1,7 @@
 import Movies from "../components/common/movies";
 import styled from "styled-components";
 
-const Favourites = () => {
-  const [favMovies, setFavMovies] = useState([]);
+const Favourites = ({ favMovies }) => {
   return (
     <Container>
       <Movies movies={favMovies} />

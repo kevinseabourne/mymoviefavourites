@@ -54,16 +54,7 @@ const VideoOverlay = ({
   };
 
   return (
-    <Container
-      onKeyDown={(e) => {
-        const escKey = e.key === 27 || e.keyCode === 27;
-        if (escKey) {
-          closeOverlay();
-          console.log(escKey);
-          e.target.blur();
-        }
-      }}
-    >
+    <Container>
       <GlobalStyle showOverlay={showOverlay} />
       <Overlay
         data-testid="videoOverlay"
