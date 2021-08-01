@@ -1,15 +1,24 @@
-import Image from "next/image";
-import styled from "styled-components";
+import Link from "next/link";
+import ImageLoader from "./common/imageLoader";
 import ResponsiveHeader from "./responsiveHeader";
+import styled from "styled-components";
 
 const Header = (props) => {
   return (
     <Container>
       <LeftContainer>dropdowns</LeftContainer>
-      <MiddleContainer>
-        <Title>Movies</Title>
-        {/* <Image /> */}
-      </MiddleContainer>
+      <Link href="/">
+        <MiddleContainer>
+          <Title>My Movie Favourites</Title>
+          <ImageLoader
+            src="https://chpistel.sirv.com/Images/popcorn-icon.png?w=60"
+            alt="popcorn"
+            width="36px"
+            placeholderSize="100%"
+            hover={true}
+          />
+        </MiddleContainer>
+      </Link>
       <RightContainer>right buttons</RightContainer>
 
       {/* {<ResponsiveHeader />} */}
@@ -41,12 +50,21 @@ const LeftContainer = styled.div`
 
 const MiddleContainer = styled.div`
   position: absolute;
-  top: 25%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  top: 30%;
   left: 50%;
   transform: translate(-50%, -50%);
+  &:hover {
+    cursor: pointer;
+  }
 `;
 
-const Title = styled.h2``;
+const Title = styled.h1`
+  margin-right: 12px;
+  letter-spacing: 0px;
+`;
 
 const RightContainer = styled.div`
   display: flex;
