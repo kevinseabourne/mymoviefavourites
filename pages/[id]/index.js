@@ -10,7 +10,6 @@ import crossIcon from "../../public/icons/cross.svg";
 import ReactStars from "react-rating-stars-component";
 
 const MoviePage = (props) => {
-  const trailerRef = useRef(null);
   const loadingSpinnerRef = useRef(null);
   // const initialSelectedMovie =
   // JSON.parse(localStorage.getItem("selectedMovie")) || 0;
@@ -18,7 +17,6 @@ const MoviePage = (props) => {
   const [selectedMovie, setSelectedMovie] = useState({});
   const [status, setStatus] = useState("idle");
   const [trailerKey, setTrailerKey] = useState(null);
-  const [watchingTrailer, setWatchingTrailer] = useState(false);
   // const [videoLoaded, setVideoLoaded] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
 
@@ -42,25 +40,11 @@ const MoviePage = (props) => {
     };
   }, []);
 
-  const handleClickOutside = (e) => {
-    if (trailerRef.current && !trailerRef.current.contains(e.target)) {
-      setWatchingTrailer(false);
-    }
-    if (
-      loadingSpinnerRef.current &&
-      !loadingSpinnerRef.current.contains(e.target)
-    ) {
-      setWatchingTrailer(false);
-    }
-  };
-
   const handleTrailerClick = () => {
-    // setWatchingTrailer(!watchingTrailer);
     setShowOverlay(true);
   };
 
   const handleTrailerLoad = () => {
-    // setVideoLoaded(true);
     setShowOverlay(true);
   };
 
