@@ -1,15 +1,42 @@
-import { useContext } from "react";
+import { useState, useContext } from "react";
 import AppContext from "../../context/appContext";
 import styled from "styled-components";
 import Image from "next/image";
 import ImageLoader from "./imageLoader";
 import Link from "next/link";
+import Router from "next/router";
 import { motion } from "framer-motion";
-// import "react-rater/lib/react-rater.css";
-// import Rater from "react-rater";
+import ReactStars from "react-rating-stars-component";
 
-const MovieItem = ({ movie, handleMovieClick, handleFavouriteClick }) => {
-  const { handleSelectedMovie } = useContext(AppContext);
+const MovieItem = ({ movie }) => {
+  const { handleSelectedMovie, handleFavouriteSelected } = useContext(
+    AppContext
+  );
+  const [imageLoaded, setimageLoaded] = useState(false);
+
+  const handleImageLoad = () => setimageLoaded(true);
+
+  const handleClick = (e, operation, movie) => {
+    console.log(e.target);
+    if (operation === "selected" && movie) {
+      handleSelectedMovie(movie);
+      Router.push("/[id]", movie.title);
+    } else if (operation === "favourite") {
+      handleFavouriteSelected();
+    }
+  };
+
+  const itemAnimation = {
+    hidden: {
+      y: 20,
+      opacity: 0,
+    },
+    show: {
+      opacity: 1,
+      y: 0,
+    },
+  };
+
   const placeholderAnimation = {
     hover: {
       backgroundColor: "rgba(18, 18, 18, 0.7)",
@@ -22,43 +49,84 @@ const MovieItem = ({ movie, handleMovieClick, handleFavouriteClick }) => {
       },
     },
   };
-  return (
-    <Container>
-      <Link href="/[id]" as="/movie">
-        <ImageContainer
-          onClick={() => handleSelectedMovie(movie)}
-          variants={placeholderAnimation}
-          whileHover="hover"
-          whileFocus="hover"
-        >
-          <FavouriteButton onClick={handleFavouriteClick} />
 
+  const hoverInfoAnimation = {
+    hover: {
+      opacity: 1,
+      transition: {
+        type: "spring",
+        duration: 0.4,
+      },
+    },
+  };
+
+  const infoAnimation = {
+    hidden: {
+      opacity: 0,
+      staggerChildren: 0.9,
+      transition: {
+        type: "spring",
+        staggerChildren: 0.9,
+      },
+    },
+    show: {
+      opacity: 1,
+      staggerChildren: 0.9,
+      transition: {
+        type: "spring",
+        staggerChildren: 2.9,
+      },
+    },
+  };
+  return (
+    <Container variants={itemAnimation}>
+      <ImageContainer
+        onClick={(e) => handleClick(e, "selected", movie)}
+        variants={placeholderAnimation}
+        whileHover="hover"
+        whileFocus="hover"
+      >
+        <BackgroundFade variants={hoverInfoAnimation} />
+        <FavouriteButton
+          onClick={(e) => handleClick(e, "favourite")}
+          variants={hoverInfoAnimation}
+          tabindex="0"
+        >
           <ImageLoader
-            key={movie.poster_path}
-            src={"https://image.tmdb.org/t/p/w500/" + movie.poster_path}
-            width="202px"
-            borderRadius="10px"
-            placeholderSize="149.1%"
+            src="/icons/heart_icon.svg"
+            width="30px"
+            placeholderSize="70%"
+            hover={true}
           />
-          <MovieRatingContainer variables={placeholderAnimation}>
-            {/* <Rater
-            total={5}
-            rating={movie.vote_average / 2}
-            interactive={false}
-            size={60}
-          /> */}
-            <DecimalRating>{movie.vote_average / 2}</DecimalRating>
-          </MovieRatingContainer>
-        </ImageContainer>
-      </Link>
-      {/* <ImageLoader
-        key={movie.poster_path}
-        src={"https://image.tmdb.org/t/p/w500/" + movie.poster_path}
-        width="202px"
-        borderRadius="10px"
-        placeholderSize="150%"
-      /> */}
-      <InfoContainer>
+        </FavouriteButton>
+
+        <ImageLoader
+          key={movie.poster_path}
+          src={"https://image.tmdb.org/t/p/w500/" + movie.poster_path}
+          width="202px"
+          borderRadius="10px"
+          placeholderSize="150%"
+          handleOnLoadOutside={handleImageLoad}
+        />
+        <MovieRatingContainer variants={hoverInfoAnimation}>
+          <ReactStars
+            value={movie.vote_average / 2}
+            count={5}
+            isHalf={true}
+            size={24}
+            activeColor="#ffd700"
+            color="#D1D5DB"
+            edit={false}
+          />
+          <DecimalRating>{movie.vote_average}</DecimalRating>
+        </MovieRatingContainer>
+      </ImageContainer>
+      {/* </Link> */}
+      <InfoContainer
+        variants={infoAnimation}
+        initial="hidden"
+        animate={imageLoaded ? "show" : "hidden"}
+      >
         <Title>{movie.title}</Title>
         <ReleaseDate>
           {movie.release_date ? movie.release_date.substring(0, [4]) : ""}
@@ -70,7 +138,7 @@ const MovieItem = ({ movie, handleMovieClick, handleFavouriteClick }) => {
 
 export default MovieItem;
 
-const Container = styled.div`
+const Container = styled(motion.div)`
   border-radius: 10px;
   display: flex;
   flex-direction: column;
@@ -89,12 +157,23 @@ const ImageContainer = styled(motion.button)`
   border: 3.4px solid transparent;
 `;
 
-const FavouriteButton = styled.div`
+const BackgroundFade = styled(motion.div)`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  opacity: 0;
+  background-color: rgba(18, 18, 18, 0.7);
+`;
+
+const FavouriteButton = styled(motion.div)`
   position: absolute;
   top: 0;
+  opacity: 0;
+  z-index: 20;
   right: 0;
-  margin-top: 5px;
-  margin-right: 10px;
+  margin-top: 12px;
+  margin-right: 16px;
 `;
 
 const MovieRatingContainer = styled(motion.div)`
@@ -102,14 +181,18 @@ const MovieRatingContainer = styled(motion.div)`
   position: absolute;
   flex-direction: row;
   justify-content: center;
-  align-items: flex-end;
-  bottom: 0px;
+  align-items: center;
+  bottom: 2px;
   opacity: 0;
+  z-index: 2;
 `;
 
-const DecimalRating = styled.span``;
+const DecimalRating = styled.span`
+  font-weight: 600;
+  margin-left: 10px;
+`;
 
-const InfoContainer = styled.div`
+const InfoContainer = styled(motion.div)`
   display: flex;
   flex-direction: column;
   text-align: left;
