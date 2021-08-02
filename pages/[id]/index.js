@@ -216,7 +216,7 @@ const MoviePage = (props) => {
         showOverlay={showOverlay}
         closeOverlay={closeOverlay}
         src={"https://www.youtube.com/embed/" + trailerKey + "?autoplay=1"}
-        maxWidth="100%"
+        maxWidth="50%"
         alt={selectedMovie.title}
         placeholderSize="56.25%"
         centerVideo={true}

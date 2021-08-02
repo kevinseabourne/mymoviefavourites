@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-// import PropTypes from "prop-types";
 import styled from "styled-components";
 import { LoadingSpinner } from "./loadingSpinner";
 import { useInView } from "react-intersection-observer";
@@ -83,24 +82,6 @@ const VideoLoader = ({
 };
 
 export default VideoLoader;
-
-// VideoLoader.propTypes = {
-//   src: PropTypes.string.isRequired,
-//   width: PropTypes.string,
-//   maxWidth: PropTypes.string,
-//   placeholderSize: PropTypes.string,
-//   alt: PropTypes.string.isRequired,
-//   keyValue: PropTypes.string,
-//   dataTestId: PropTypes.string,
-//   closeOverlayWhileLoading: PropTypes.func,
-//   delay: PropTypes.string,
-//   isFavourite: PropTypes.string,
-//   onClick: PropTypes.func,
-//   borderRadius: PropTypes.string,
-//   hover: PropTypes.bool,
-//   hoverColor: PropTypes.string,
-//   centerVideo: PropTypes.bool,
-// };
 
 const VideoContainer = styled.div`
   display: flex;
