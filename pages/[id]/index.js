@@ -34,17 +34,9 @@ const MoviePage = (props) => {
     };
 
     fetchData();
-    window.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      window.removeEventListener("mousedown", handleClickOutside);
-    };
   }, []);
 
   const handleTrailerClick = () => {
-    setShowOverlay(true);
-  };
-
-  const handleTrailerLoad = () => {
     setShowOverlay(true);
   };
 
