@@ -21,7 +21,6 @@ const VideoLoader = ({
   hover,
   hoverColor,
   centerVideo,
-  autoPlay,
 }) => {
   // Cypress Testing Coverage //
   /* istanbul ignore file */
@@ -75,11 +74,7 @@ const VideoLoader = ({
           hoverColor={hoverColor}
           borderRadius={borderRadius}
           title="movie-trailer"
-          allow={
-            autoPlay
-              ? "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen;"
-              : "accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen;"
-          }
+          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen;"
           frameBorder="0"
         />
       )}
