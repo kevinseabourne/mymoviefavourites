@@ -1,17 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Link } from "next/link";
+import Link from "next/link";
 import { getVideoObject } from "../api/movies";
 import { LoadingSpinner } from "../../components/common/loadingSpinner";
-// import Rater from "react-rater";
-// import Fade from "react-reveal/Fade";
-// import "./movieForm.css";
-// import { CSSTransition, TransitionGroup } from "react-transition-group";
 import styled, { createGlobalStyle } from "styled-components";
 import ImageLoader from "../../components/common/imageLoader";
 import VideoOverlay from "../../components/common/videoOverlay";
-// import VideoLoader from "../components/common/videoLoader";
-import heartIcon from "../../public/icons/heart-icon.svg";
+import heartIcon from "../../public/icons/heart_icon.svg";
 import crossIcon from "../../public/icons/cross.svg";
+import ReactStars from "react-rating-stars-component";
 
 const MoviePage = (props) => {
   const trailerRef = useRef(null);
@@ -73,34 +69,30 @@ const MoviePage = (props) => {
   };
 
   const { handleFavouriteToggle } = props;
-  // const selectedMovieGenres = "";
-  // const selectedMovieGenres = JSON.parse(
-  // localStorage.getItem("selectedMovieGenres")
-  // );
 
   return status === "pending" ? (
     <LoadingSpinner ref={loadingSpinnerRef} />
   ) : (
     <Container>
       <GlobalStyle watchingTrailer={watchingTrailer} />
-      {/* <Link href="/" as="/movie"> */}
-      <ExitButton>
-        <ImageLoader
-          src={crossIcon}
-          width="30px"
-          placeholderSize="100%"
-          alt="cross-icon"
-          hover={true}
-          hoverColor={
-            "invert(46%) sepia(25%) saturate(1858%) hue-rotate(180deg) brightness(86%) contrast(102%)"
-          }
-        />
-      </ExitButton>
-      {/* </Link> */}
+      <Link href="/">
+        <ExitButton>
+          <ImageLoader
+            src={crossIcon}
+            width="30px"
+            placeholderSize="100%"
+            alt="cross-icon"
+            hover={true}
+            hoverColor={
+              "invert(46%) sepia(25%) saturate(1858%) hue-rotate(180deg) brightness(86%) contrast(102%)"
+            }
+          />
+        </ExitButton>
+      </Link>
       <MovieContainer>
         <ImageLoader
           src={"https://image.tmdb.org/t/p/w780/" + selectedMovie.poster_path}
-          maxWidth="622px"
+          maxWidth="750px"
           alt={selectedMovie.title}
           borderRadius={"10px"}
           placeholderSize={"150%"}
@@ -113,14 +105,18 @@ const MoviePage = (props) => {
               <InfoBar>
                 <ReleaseDate>{selectedMovie.release_date}</ReleaseDate>
 
-                {selectedMovie.relatedGenres &&
-                  selectedMovie.relatedGenres.map((genre, index) => (
-                    <Genres>
-                      {selectedMovie.relatedGenres.length === index
-                        ? genre
-                        : ` ${genre}  / `}
-                    </Genres>
-                  ))}
+                <ReleatedGenresContainer
+                  relatedGenresLength={
+                    selectedMovie.relatedGenres
+                      ? selectedMovie.relatedGenres.length
+                      : 4
+                  }
+                >
+                  {selectedMovie.relatedGenres &&
+                    selectedMovie.relatedGenres.map((genre) => (
+                      <Genres key={genre}>{genre}</Genres>
+                    ))}
+                </ReleatedGenresContainer>
                 <MovieDBLink
                   target="_blank"
                   rel="noopener noreferrer"
@@ -134,19 +130,22 @@ const MoviePage = (props) => {
                   <ImageLoader
                     src="https://www.themoviedb.org/assets/1/v4/logos/408x161-powered-by-rectangle-green-bb4301c10ddc749b4e79463811a68afebeae66ef43d17bcfd8ff0e60ded7ce99.png"
                     width="115px"
-                    placeholderSize="40%"
+                    placeholderSize="37%"
                     alt="movie-db-logo"
                     hover={true}
                   />
                 </MovieDBLink>
 
                 <StarRating>
-                  {/* <Rater
-                    total={5}
-                    rating={selectedMovie.vote_average / 2}
-                    interactive={false}
-                    size={60}
-                  /> */}
+                  <ReactStars
+                    value={selectedMovie.vote_average / 2}
+                    count={5}
+                    isHalf={true}
+                    size={24}
+                    activeColor="#ffd700"
+                    color="#D1D5DB"
+                    edit={false}
+                  />
                 </StarRating>
               </InfoBar>
               <Description>{selectedMovie.overview}</Description>
@@ -163,7 +162,7 @@ const MoviePage = (props) => {
                 <ImageLoader
                   src="https://www.themoviedb.org/assets/1/v4/logos/408x161-powered-by-rectangle-green-bb4301c10ddc749b4e79463811a68afebeae66ef43d17bcfd8ff0e60ded7ce99.png"
                   width="130px"
-                  placeholderSize="40%"
+                  placeholderSize="100%"
                   alt="movie-db-logo"
                   hover={true}
                   centerImage={true}
@@ -175,28 +174,28 @@ const MoviePage = (props) => {
                 Watch Trailer
               </TrailerButton>
               <ResponsiveExitFavContainer>
-                {/* <Link href="/" as="/"> */}
-                <ResponsiveExitButton>
-                  <ImageLoader
-                    src={crossIcon}
-                    width="32.6px"
-                    placeholderSize="100%"
-                    alt="cross-icon"
-                    hover={true}
-                    hoverColor={
-                      "invert(46%) sepia(25%) saturate(1858%) hue-rotate(180deg) brightness(86%) contrast(102%)"
-                    }
-                  />
-                </ResponsiveExitButton>
-                {/* </Link> */}
+                <Link href="/">
+                  <ResponsiveExitButton>
+                    <ImageLoader
+                      src={crossIcon}
+                      width="32.6px"
+                      placeholderSize="100%"
+                      alt="cross-icon"
+                      hover={true}
+                      hoverColor={
+                        "invert(46%) sepia(25%) saturate(1858%) hue-rotate(180deg) brightness(86%) contrast(102%)"
+                      }
+                    />
+                  </ResponsiveExitButton>
+                </Link>
                 <FavouritesButton
                   onClick={() => handleFavouriteToggle(selectedMovie)}
                 >
                   <FavouriteIcon>
                     <ImageLoader
                       src={heartIcon}
-                      width="100%"
-                      placeholderSize="100%"
+                      width="27px"
+                      placeholderSize="70%"
                       alt="heart-icon"
                       isFavourite={selectedMovie.favourite}
                       onClick={() => handleFavouriteToggle(selectedMovie)}
@@ -221,7 +220,6 @@ const MoviePage = (props) => {
         alt={selectedMovie.title}
         placeholderSize="56.25%"
         centerVideo={true}
-        autoPlay={showOverlay ? true : false}
       />
     </Container>
   );
@@ -250,8 +248,8 @@ const Container = styled.div`
 
 const ExitButton = styled.button`
   position: absolute;
-  top: 125px;
-  right: 36px;
+  top: 49px;
+  right: 75px;
   background: transparent;
   border: none;
   outline: none;
@@ -263,7 +261,7 @@ const ExitButton = styled.button`
 
 const MovieContainer = styled.div`
   display: grid;
-  grid-template-columns: minmax(1px, 435px) minmax(300px, 800px);
+  grid-template-columns: minmax(1px, 600px) minmax(300px, 800px);
   align-items: center;
   padding: 0 10.3%;
   @media (max-width: 1200px) {
@@ -272,7 +270,7 @@ const MovieContainer = styled.div`
     margin-top: 0px;
     padding: 20px;
     grid-auto-flow: column;
-    grid-template-columns: minmax(1px, 626px);
+    grid-template-columns: minmax(1px, 526px);
     grid-template-rows: 1fr auto;
   }
 `;
@@ -358,8 +356,26 @@ const ReleaseDate = styled.span`
   }
 `;
 
+const ReleatedGenresContainer = styled.div`
+  display: grid;
+  justify-content: center;
+  grid-template-columns: ${({ relatedGenresLength }) =>
+    relatedGenresLength >= 4
+      ? `repeat(${relatedGenresLength / 2}, 1fr)`
+      : `repeat(${relatedGenresLength}, 1fr)`};
+  grid-gap: 2px 10px;
+  @media (max-width: 2360px) {
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 5% 15%;
+  }
+  @media (max-width: 1560px) {
+    grid-template-columns: repeat(auto-fit, 1fr);
+  }
+`;
+
 const Genres = styled.span`
   white-space: nowrap;
+  text-align: center;
   @media (max-width: 1200px) {
     display: none;
   }
