@@ -1,7 +1,6 @@
 import { useState, useContext } from "react";
 import AppContext from "../../context/appContext";
 import styled from "styled-components";
-import Image from "next/image";
 import ImageLoader from "./imageLoader";
 import Link from "next/link";
 import Router from "next/router";
@@ -123,7 +122,6 @@ const MovieItem = ({ movie }) => {
           <DecimalRating>{movie.vote_average}</DecimalRating>
         </MovieRatingContainer>
       </ImageContainer>
-      {/* </Link> */}
       <InfoContainer
         variants={infoAnimation}
         initial="hidden"

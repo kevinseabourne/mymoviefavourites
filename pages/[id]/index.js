@@ -74,7 +74,7 @@ const MoviePage = (props) => {
     <LoadingSpinner ref={loadingSpinnerRef} />
   ) : (
     <Container>
-      <GlobalStyle watchingTrailer={watchingTrailer} />
+      <GlobalStyle showOverlay={showOverlay} />
       <Link href="/">
         <ExitButton>
           <ImageLoader
@@ -229,8 +229,7 @@ export default MoviePage;
 
 const GlobalStyle = createGlobalStyle`
  body {
-   overflow: ${({ watchingTrailer }) =>
-     watchingTrailer ? "hidden" : "scroll"};
+   overflow: ${({ showOverlay }) => (showOverlay ? "hidden" : "scroll")};
   }
 `;
 
