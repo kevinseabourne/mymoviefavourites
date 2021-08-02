@@ -155,6 +155,9 @@ const ImageContainer = styled(motion.button)`
   border-radius: 10px;
   background-color: transparent;
   border: 3.4px solid transparent;
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
 `;
 
 const BackgroundFade = styled(motion.div)`
