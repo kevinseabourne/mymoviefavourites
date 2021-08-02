@@ -27,6 +27,10 @@ const ImageLoader = ({
   centerImage,
   contentLoaded,
   handleOnLoadOutside,
+  marginTop,
+  marginBottom,
+  marginLeft,
+  marginRight,
   y,
   x,
   zIndex,
@@ -45,7 +49,7 @@ const ImageLoader = ({
   const handleLoadComplete = () => {
     setIsLoaded(true);
     if (handleOnLoadOutside) {
-      // handleOnLoadOutside(itemId);
+      handleOnLoadOutside();
     }
   };
 
@@ -75,8 +79,13 @@ const ImageLoader = ({
     <ImageContainer
       borderRadius={borderRadius}
       width={width}
+      hover={hover}
       maxWidth={maxWidth}
       centerImage={centerImage}
+      marginTop={marginTop}
+      marginBottom={marginBottom}
+      marginLeft={marginLeft}
+      marginRight={marginRight}
       variants={animation}
       initial="hidden"
       animate={isLoaded ? "show" : "hidden"}
@@ -94,8 +103,8 @@ const ImageLoader = ({
         <Image
           src={src}
           alt={alt}
-          onLoadingComplete={() => setIsLoaded(true)}
-          objectFit="contain"
+          onLoadingComplete={handleLoadComplete}
+          objectFit="fill"
           layout="fill"
         />
       )}
@@ -106,35 +115,6 @@ const ImageLoader = ({
 
 export default ImageLoader;
 
-// ImageLoader.propTypes = {
-//   src: PropTypes.string.isRequired,
-//   srcSet: PropTypes.string,
-//   width: PropTypes.string,
-//   maxWidth: PropTypes.string,
-//   placeholderSize: PropTypes.string,
-//   placeholderColor: PropTypes.string,
-//   alt: PropTypes.string.isRequired,
-//   itemId: PropTypes.string,
-//   keyValue: PropTypes.string,
-//   dataTestId: PropTypes.string,
-//   onClick: PropTypes.func,
-//   borderRadius: PropTypes.string,
-//   hover: PropTypes.bool,
-//   duration: PropTypes.number,
-//   boxShadow: PropTypes.string,
-//   loadingSpinner: PropTypes.bool,
-//   centerImage: PropTypes.bool,
-//   contentLoaded: PropTypes.bool,
-//   handleOnLoadOutside: PropTypes.func,
-//   y: PropTypes.number,
-//   x: PropTypes.number,
-//   zIndex: PropTypes.number,
-//   blur: PropTypes.number,
-//   scale: PropTypes.number,
-//   opacity: PropTypes.number,
-//   delay: PropTypes.number,
-// };
-
 const ImageContainer = styled(motion.div)`
   display: flex;
   align-items: center;
@@ -144,9 +124,17 @@ const ImageContainer = styled(motion.div)`
   position: relative;
   background: transparent;
   margin: ${({ centerImage }) => (centerImage ? "auto" : "none")};
+  margin-top: ${({ marginTop }) => (marginTop ? marginTop : "none")};
+  margin-bottom: ${({ marginBottom }) =>
+    marginBottom ? marginBottom : "none"};
+  margin-left: ${({ marginLeft }) => (marginLeft ? marginLeft : "none")};
+  margin-right: ${({ marginRight }) => (marginRight ? marginRight : "none")};
   z-index: ${({ hoverColor }) => (hoverColor ? "auto" : "0")};
   border-radius: ${({ borderRadius }) => (borderRadius ? borderRadius : "0px")};
   overflow: ${({ src }) => (src ? "default" : "hidden")};
+  &:hover {
+    cursor: ${({ hover }) => (hover ? "pointer" : "default")};
+  }
 `;
 
 const Placeholder = styled(motion.div)`
@@ -160,21 +148,3 @@ const Placeholder = styled(motion.div)`
   box-sizing: border-box;
   border: 3.4px solid transparent;
 `;
-
-// const Image = styled(motion.img)`
-//   position: absolute;
-//   top: 0;
-//   bottom: 0;
-//   left: 0;
-//   right: 0;
-//   margin: auto;
-//   width: 100%;
-//   height: 100%;
-//   object-fit: contain;
-//   object-position: center;
-//   border-radius: ${({ borderRadius }) => (borderRadius ? borderRadius : "0px")};
-//   &:hover {
-//     cursor: ${({ hover }) => (hover ? "pointer" : "default")};
-//   }
-//   }
-//   `;
