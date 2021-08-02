@@ -43,53 +43,56 @@ const VideoOverlay = ({
   const animation = {
     hidden: {
       opacity: 0,
-      visibility: "hidden",
-      zIndex: -100,
     },
     show: {
       opacity: 1,
-      visibility: "visible",
-      zIndex: "auto",
+      transition: {
+        duration: 0.7,
+      },
     },
   };
 
   return (
-    <Container>
-      <GlobalStyle showOverlay={showOverlay} />
-      <Overlay
-        data-testid="videoOverlay"
-        variants={animation}
-        initial="hidden"
-        animate={showOverlay === true ? "show" : "hidden"}
-      >
-        <VideoContainer
-          ref={videoRef}
-          maxWidth={maxWidth}
-          role="button"
-          tabIndex="0"
-          onKeyDown={(e) => {
-            const escKey = e.key === 27 || e.keyCode === 27;
-            if (escKey) {
-              closeOverlay();
-              e.target.blur();
-            }
-          }}
-        >
-          <VideoLoader
-            src={src}
-            maxWidth="inherit"
-            alt={alt}
-            borderRadius={borderRadius}
-            width={width}
-            placeholderSize={placeholderSize}
-            centerVideo={centerVideo}
-            lazyLoad={false}
-            autoPlay={autoPlay}
-            closeOverlayWhileLoading={closeOverlayWhileLoading}
-          />
-        </VideoContainer>
-      </Overlay>
-    </Container>
+    <AnimatePresence>
+      {showOverlay && (
+        <Container>
+          <GlobalStyle showOverlay={showOverlay} />
+          <Overlay
+            data-testid="videoOverlay"
+            variants={animation}
+            initial="hidden"
+            animate="show"
+            exit="hidden"
+          >
+            <VideoContainer
+              ref={videoRef}
+              maxWidth={maxWidth}
+              role="button"
+              tabIndex="0"
+              onKeyDown={(e) => {
+                const escKey = e.key === 27 || e.keyCode === 27;
+                if (escKey) {
+                  closeOverlay();
+                  e.target.blur();
+                }
+              }}
+            >
+              <VideoLoader
+                src={src}
+                maxWidth="inherit"
+                alt={alt}
+                borderRadius={borderRadius}
+                width={width}
+                placeholderSize={placeholderSize}
+                centerVideo={centerVideo}
+                lazyLoad={false}
+                closeOverlayWhileLoading={closeOverlayWhileLoading}
+              />
+            </VideoContainer>
+          </Overlay>
+        </Container>
+      )}
+    </AnimatePresence>
   );
 };
 
