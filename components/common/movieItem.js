@@ -17,10 +17,12 @@ const MovieItem = ({ movie }) => {
   const handleImageLoad = () => setimageLoaded(true);
 
   const handleClick = (e, operation, movie) => {
-    console.log(e.target);
     if (operation === "selected" && movie) {
       handleSelectedMovie(movie);
-      Router.push("/[id]", movie.title);
+      Router.push(
+        "/[id]",
+        movie.title.toLowerCase().replace(/[{L}!#$@#*+)(:;{}\s]/g, "-")
+      );
     } else if (operation === "favourite") {
       handleFavouriteSelected();
     }
