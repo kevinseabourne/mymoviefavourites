@@ -1,10 +1,12 @@
+import App from "next/app";
 import { useState, useEffect, useRef } from "react";
 import Header from "../components/header";
 import AppContext from "../context/appContext";
 import { getGenres } from "./api/genres";
 import { getTrendingMovies } from "./api/movies";
 import { GlobalStyle } from "../globalStyle";
-import { ThemeProvider } from "styled-components";
+import styled, { ThemeProvider } from "styled-components";
+import { isArrayEmpty } from "../components/common/utils/isEmpty";
 
 const theme = {
   colors: {
@@ -12,7 +14,12 @@ const theme = {
   },
 };
 
-export default function App({ Component, pageProps }) {
+export default function MyApp({
+  Component,
+  pageProps,
+  allGenres,
+  allTrendingMovies,
+}) {
   const ref = useRef(null);
   const [status, setStatus] = useState("idle");
   const [movies, setMovies] = useState([]);
@@ -20,17 +27,8 @@ export default function App({ Component, pageProps }) {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: genreData } = await getGenres();
-      const allGenres = [{ id: "", name: "All" }, ...genreData.genres];
-      setGenres(allGenres);
-      const response = await getTrendingMovies(page);
-      setMovies(response);
-    };
-    fetchData();
-  }, []);
-
-  useEffect(() => {
+    setGenres(allGenres);
+    setMovies(allTrendingMovies);
     window.addEventListener("scroll", getMoreMovies);
     return () => window.removeEventListener("scroll", getMoreMovies);
   }, []);
@@ -72,15 +70,70 @@ export default function App({ Component, pageProps }) {
     localStorage.setItem("selectedMovie", JSON.stringify(selectedMovie));
   };
 
+  const handleFavouriteSelected = (favMovie) => {
+    const favMovies = localStorage.getItem("favouriteMovies")
+      ? JSON.parse(localStorage.getItem("selectedMovie"))
+      : [];
+    let addFavMovie = false;
+    if (isArrayEmpty(favMovie)) {
+      const deletedMovieFromFavMovies = favMovies.map((movie) => {
+        if (movie.id === favMovie.id) {
+          addFavMovie = true;
+          // delete movie;
+        }
+      });
+      if (addFavMovie) {
+        const updatedFavMovies = [...favMovies, favMovie];
+        localStorage.setItem(
+          "favouriteMovies",
+          JSON.stringify(updatedFavMovies)
+        );
+      } else {
+        localStorage.setItem(
+          "favouriteMovies",
+          JSON.stringify(deletedMovieFromFavMovies)
+        );
+      }
+    }
+  };
+
   return (
-    <AppContext.Provider value={{ movies, handleSelectedMovie }}>
-      <div ref={ref}>
+    <AppContext.Provider
+      value={{ genres, movies, handleSelectedMovie, handleFavouriteSelected }}
+    >
+      <Container ref={ref}>
         <Header />
-        <GlobalStyle />
-        <ThemeProvider theme={theme}>
-          <Component {...pageProps} />
-        </ThemeProvider>
-      </div>
+        <CompenentMargin>
+          <GlobalStyle />
+          <ThemeProvider theme={theme}>
+            <Component {...pageProps} />
+          </ThemeProvider>
+        </CompenentMargin>
+      </Container>
     </AppContext.Provider>
   );
 }
+
+MyApp.getInitialProps = async (appContext) => {
+  const pageProps = await App.getInitialProps(appContext);
+
+  const genres = await getGenres();
+  const allGenres = [{ id: "", name: "All" }, ...genres.data.genres];
+
+  const allTrendingMovies = await getTrendingMovies(1);
+
+  return { ...pageProps, allGenres, allTrendingMovies };
+};
+
+const Container = styled.div`
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+`;
+
+const CompenentMargin = styled.div`
+  margin-top: 90px;
+  @media (max-width: 632px) {
+    margin-top: 76px;
+  }
+`;
