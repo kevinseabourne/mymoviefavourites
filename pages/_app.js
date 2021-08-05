@@ -36,6 +36,7 @@ export default function MyApp({
   const [secondGenreFilter, setSecondGenreFilter] = useState(false);
   const [secondSortByFilter, setSecondSortByFilter] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState("Trending");
+  const [searching, setSearching] = useState(false);
   const [noSearchResult, setNoSearchResult] = useState(false);
   // const [page, setPage] = useState(1);
 
@@ -78,6 +79,8 @@ export default function MyApp({
     const response = await getGenreMovies(1, selectedGenre.id);
 
     if (response) {
+      // movies are reset to empty to allow for animation
+      setMovies([]);
       setMovies(response);
     }
   };
@@ -115,8 +118,8 @@ export default function MyApp({
 
   const handleGetTrendingMovies = async () => {
     router.pathname === "/favourites" && router.push("/");
+    setSearching(false);
     setStatus("pending");
-    console.log(window.location.pathname);
     const trendingMovies = await getTrendingMovies(1);
     if (trendingMovies) {
       setNoSearchResult(false);
@@ -125,7 +128,7 @@ export default function MyApp({
         setStatus("resolved");
         return trendingMovies;
       } else {
-        // movies are reset to an empty to allow for animation
+        // movies are reset to empty to allow for animation
         setMovies([]);
         setDataTitle("Trending");
         setMovies(trendingMovies);
@@ -137,6 +140,7 @@ export default function MyApp({
 
   const handleGetPopularMovies = async () => {
     router.pathname === "/favourites" && router.push("/");
+    setSearching(false);
     setStatus("pending");
     const popularMovies = await getPopularOrTopRatedMovies(1, "popular");
     if (popularMovies) {
@@ -146,7 +150,7 @@ export default function MyApp({
         setStatus("resolved");
         return popularMovies;
       } else {
-        // movies are reset to an empty to allow for animation
+        // movies are reset to empty to allow for animation
         setMovies([]);
         setDataTitle("Popular");
         setMovies(popularMovies);
@@ -158,6 +162,7 @@ export default function MyApp({
 
   const handleGetTopRatedMovies = async () => {
     router.pathname === "/favourites" && router.push("/");
+    setSearching(false);
     setStatus("pending");
     const topRatedMovies = await getPopularOrTopRatedMovies(1, "top_rated");
     if (topRatedMovies) {
@@ -167,7 +172,7 @@ export default function MyApp({
         setStatus("resolved");
         return topRatedMovies;
       } else {
-        // movies are reset to an empty to allow for animation
+        // movies are reset to empty to allow for animation
         setMovies([]);
         setDataTitle("Top Rated");
         setMovies(topRatedMovies);
@@ -179,7 +184,7 @@ export default function MyApp({
 
   const handleYearFilter = () => {
     // Sorts the movies from newest - oldest when you sort by Year
-    // movies are reset to an empty to allow for animation
+    // movies are reset to empty to allow for animation
     setStatus("pending");
     setMovies([]);
     const moviesClone = [...movies];
@@ -204,7 +209,7 @@ export default function MyApp({
     const filteredMovies = moviesClone.sort((a, b) => {
       return a.title.localeCompare(b.title);
     });
-    // movies are reset to an empty to allow for animation
+    // movies are reset to empty to allow for animation
 
     setMovies(filteredMovies);
     setSecondSortByFilter(true);
@@ -222,7 +227,7 @@ export default function MyApp({
         return a.vote_average - b.vote_average;
       })
       .reverse();
-    // movies are reset to an empty to allow for animation
+    // movies are reset to empty to allow for animation
 
     setMovies(filteredMovies);
     setSecondSortByFilter(true);
@@ -286,6 +291,7 @@ export default function MyApp({
   // ------------------------ Search ------------------------ //
 
   const handleSearch = async (query) => {
+    setSearching(true);
     // used to display a message saying 'no movies found' for a search result instead of a loading spinner
     if (router.pathname === "/favourites") {
       handleFavouritesSearch(query);
@@ -357,6 +363,7 @@ export default function MyApp({
           handleSearch={handleSearch}
           handleSelectedSortBy={handleSelectedSortBy}
           handleSelectedGenre={handleSelectedGenre}
+          searching={searching}
         />
         <CompenentMargin>
           <GlobalStyle />
