@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import { isArrayEmpty } from "../../components/common/utils/isEmpty";
 import { getVideoObject } from "../api/movies";
 import { LoadingSpinner } from "../../components/common/loadingSpinner";
 import styled, { createGlobalStyle } from "styled-components";
@@ -17,6 +18,7 @@ const MoviePage = (props) => {
   const [selectedMovie, setSelectedMovie] = useState({});
   const [status, setStatus] = useState("idle");
   const [trailerKey, setTrailerKey] = useState(null);
+  const [noTrailer, setNoTrailer] = useState(false);
   // const [videoLoaded, setVideoLoaded] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
 
@@ -28,9 +30,18 @@ const MoviePage = (props) => {
       const { id } = selected;
 
       const data = await getVideoObject(id);
-      let movieKey = data.results[0].key;
-      setTrailerKey(movieKey);
-      setStatus("resolved");
+      if (data) {
+        if (isArrayEmpty(data.results)) {
+          const { results } = data;
+          console.log(results);
+          const trailer = results.find((t) => t.type === "Trailer");
+
+          setTrailerKey(trailer.key);
+        } else {
+          setNoTrailer(true);
+        }
+        setStatus("resolved");
+      }
     };
 
     fetchData();
@@ -59,9 +70,6 @@ const MoviePage = (props) => {
             placeholderSize="100%"
             alt="cross-icon"
             hover={true}
-            hoverColor={
-              "invert(46%) sepia(25%) saturate(1858%) hue-rotate(180deg) brightness(86%) contrast(102%)"
-            }
           />
         </ExitButton>
       </Link>
@@ -146,9 +154,11 @@ const MoviePage = (props) => {
               </ResponsiveMovieDBLink>
             </InnerInformationContainer>
             <ButtonsContainer>
-              <TrailerButton onClick={handleTrailerClick}>
-                Watch Trailer
-              </TrailerButton>
+              {!noTrailer && (
+                <TrailerButton onClick={handleTrailerClick}>
+                  Watch Trailer
+                </TrailerButton>
+              )}
               <ResponsiveExitFavContainer>
                 <Link href="/">
                   <ResponsiveExitButton>
@@ -171,8 +181,9 @@ const MoviePage = (props) => {
                     <ImageLoader
                       src={heartIcon}
                       width="27px"
-                      placeholderSize="70%"
-                      alt="heart-icon"
+                      placeholderSize="100%"
+                      alt="heart"
+                      hover={true}
                       isFavourite={selectedMovie.favourite}
                       onClick={() => handleFavouriteToggle(selectedMovie)}
                       svgStartColor="invert(89%) sepia(7%) saturate(74%) hue-rotate(164deg) brightness(90%) contrast(87%);"
@@ -188,15 +199,17 @@ const MoviePage = (props) => {
         </InfoContainer>
       </MovieContainer>
 
-      <VideoOverlay
-        showOverlay={showOverlay}
-        closeOverlay={closeOverlay}
-        src={"https://www.youtube.com/embed/" + trailerKey + "?autoplay=1"}
-        maxWidth="50%"
-        alt={selectedMovie.title}
-        placeholderSize="56.25%"
-        centerVideo={true}
-      />
+      {!noTrailer && (
+        <VideoOverlay
+          showOverlay={showOverlay}
+          closeOverlay={closeOverlay}
+          src={"https://www.youtube.com/embed/" + trailerKey + "?autoplay=1"}
+          maxWidth="1400px"
+          alt={selectedMovie.title}
+          placeholderSize="56.25%"
+          centerVideo={true}
+        />
+      )}
     </Container>
   );
 };
@@ -227,8 +240,17 @@ const ExitButton = styled.button`
   right: 75px;
   background: transparent;
   border: none;
-  outline: none;
   padding: 0;
+  filter: invert(93%) sepia(7%) saturate(71%) hue-rotate(169deg) brightness(86%)
+    contrast(87%);
+  transition: 0.3s ease;
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+  &:hover {
+    filter: invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg)
+      brightness(102%) contrast(105%);
+  }
   @media (max-width: 1024px) {
     display: none;
   }
@@ -257,6 +279,7 @@ const InfoContainer = styled.div`
   max-width: ${({ width }) => width};
   width: 100%;
   height: 100%;
+  letter-spacing: 0px;
   position: relative;
   border-radius: 10px;
   border-radius: 0px;
@@ -445,6 +468,9 @@ const TrailerButton = styled.button`
   word-spacing: 0.2px;
   text-decoration: none;
   margin-right: 30px;
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
   &:hover {
     transition-timing-function: ease-in-out;
     transition-duration: 0.5s;
@@ -503,7 +529,9 @@ const FavouritesButton = styled.button`
   white-space: nowrap;
   align-items: center;
   width: 173px;
-  outline: none;
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
   &:hover {
     cursor: pointer;
     opacity: 1;
@@ -516,6 +544,13 @@ const FavouritesButton = styled.button`
 `;
 
 const FavouriteIcon = styled.div`
+  filter: invert(93%) sepia(6%) saturate(90%) hue-rotate(169deg) brightness(88%)
+    contrast(83%);
+  transition: 0.3s ease;
+  &:hover {
+    filter: invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg)
+      brightness(102%) contrast(105%);
+  }
   width: 26px;
   @media (max-width: 1024px) {
     width: 38px;
