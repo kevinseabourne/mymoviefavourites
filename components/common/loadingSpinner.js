@@ -1,11 +1,11 @@
 import React from "react";
 import styled, { keyframes } from "styled-components";
 
-export const LoadingSpinner = React.forwardRef((props, ref) => (
-  <SpinnerContainer ref={ref}>
+export const LoadingSpinner = React.forwardRef(({ marginTop }, ref) => (
+  <Spinner marginTop={marginTop} ref={ref}>
     <CircleOutside />
     <CircleInside />
-  </SpinnerContainer>
+  </Spinner>
 ));
 
 const clockwise = keyframes`
@@ -28,20 +28,20 @@ const counterClockwise = keyframes`
   }
 `;
 
-const SpinnerContainer = styled.div`
+const Spinner = styled.div`
   height: 67px;
   width: 67px;
   display: block;
   opacity: 0.8;
-  margin: auto;
   position: absolute;
   left: 0;
   top: 0;
   right: 0;
   bottom: 0;
+  margin-top: ${({ marginTop }) => (marginTop ? marginTop : "auto")};
+  margin-bottom: auto;
   margin-left: auto;
   margin-right: auto;
-  margin-top: 220px;
 `;
 
 const CircleOutside = styled.div`
