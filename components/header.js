@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useState, useEffect, useRef, useContext } from "react";
 import AppContext from "../context/appContext";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 // import { Tooltip, OverlayTrigger } from "react-bootstrap";
 // import Fade from "react-reveal/Fade";
 import { useForm } from "react-hook-form";
@@ -12,13 +13,17 @@ import searchIcon from "../public/icons/search-icon.svg";
 import heartIcon from "../public/icons/heart_icon.svg";
 import infoIcon from "../public/icons/info-circle-icon.svg";
 
-const Header = (props) => {
-  const { genres: genresData } = useContext(AppContext);
+const Header = ({
+  handleSelectedGenre,
+  handleSelectedSortBy,
+  handleSearch,
+  genres,
+}) => {
+  const router = useRouter();
   const genreDropdownRef = useRef(null);
   const sortByDropdownRef = useRef(null);
   const searchRef = useRef(null);
   const [genreDropdownOpen, setGenreDropdownOpen] = useState(false);
-  const [genres, setGenres] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState("All");
   const [sortByDropdownOpen, setSortByDropdownOpen] = useState(false);
   const [selectedSortBy, setSelectedSortBy] = useState("Trending");
@@ -32,15 +37,31 @@ const Header = (props) => {
   ]);
   const [inputOpen, setInputOpen] = useState(false);
   const [dropdownHovering, setDropdownHovering] = useState(false);
-  const { register, handleSubmit } = useForm();
+  const [renderChangeOnce, setRenderChangeOnce] = useState(false);
+  const { register, handleSubmit, reset } = useForm();
 
   useEffect(() => {
-    setGenres(genresData);
     window.addEventListener("mousedown", handleClickOutside);
     return () => {
       window.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    if (router.pathname === "/favourites") {
+      !renderChangeOnce && setSelectedSortBy("Year");
+      setRenderChangeOnce(true);
+    } else if (!renderChangeOnce) {
+      !renderChangeOnce && setSelectedSortBy("Trending");
+      setRenderChangeOnce(true);
+    }
+  });
+
+  useEffect(() => {}, [selectedSortBy]);
+
+  useEffect(() => {
+    inputOpen && reset();
+  }, [inputOpen]);
 
   const handleClickOutside = (e) => {
     if (
@@ -60,7 +81,10 @@ const Header = (props) => {
     }
   };
 
-  const onSubmit = (query) => {};
+  const onSubmit = (query) => {
+    const { search } = query;
+    query && handleSearch(search);
+  };
 
   const handleInputOpen = () => {
     searchRef.current.focus();
@@ -75,30 +99,57 @@ const Header = (props) => {
     setSortByDropdownOpen(!sortByDropdownOpen);
   };
 
-  const {
-    onGenreSelect,
-    onSortBySelection,
-    handleFavouritesPageSelection,
-    allFavMovies,
-    FavouritesSectionOpen,
-    onChange,
-  } = props;
+  const handleOnClick = () => {
+    // the function reset the dropdown setting back to default and changes route to the home page
+    if (selectedGenre !== "All" || selectedSortBy !== "Trending") {
+      // No need to call handleGenreBy because doing will make the same http request handleSelectedSortBy("All") is doing
+      setSelectedGenre("All");
+      setSelectedSortBy("Trending");
+      handleSelectedGenre({ id: null, name: "All" });
+      handleSelectedGenre("All");
+      handleSelectedSortBy("Trending");
+    }
+    router.pathname !== "/" && router.push("/");
+  };
+
+  // const {
+  // onGenreSelect,
+  // onSortBySelection,
+  // handleFavouritesPageSelection,
+  // allFavMovies,
+  // FavouritesSectionOpen,
+  // onChange,
+  // } = props;
+
+  const favouritesSectionOpen = false;
 
   return (
     <Container>
       <FilterSection>
-        <Link href="/">
-          <MoviesLabel>Movies</MoviesLabel>
-        </Link>
-        {FavouritesSectionOpen ? (
+        <MoviesLabel onClick={handleOnClick} tabIndex="0">
+          Movies
+        </MoviesLabel>
+
+        {favouritesSectionOpen ? (
           <FavouritesCounter>{allFavMovies.length}</FavouritesCounter>
         ) : (
-          <GenreContainer ref={genreDropdownRef} onClick={handleGenreDropdown}>
+          <GenreContainer
+            ref={genreDropdownRef}
+            onClick={handleGenreDropdown}
+            onFocus={handleGenreDropdown}
+            onBlur={handleGenreDropdown}
+          >
             <DropdownTitle>Genre</DropdownTitle>
             <SelectedDropdownValue>{selectedGenre}</SelectedDropdownValue>
             <CarrotIconContainer>
-              <CarrotIconPlaceholder />
-              <CarrotIcon src={carrotIcon} />
+              <ImageLoader
+                src={carrotIcon}
+                width="10px"
+                placeholderSize="56.85%"
+                alt="carrot"
+                hover={true}
+                priority={true}
+              />
             </CarrotIconContainer>
             {genreDropdownOpen && (
               <Dropdown>
@@ -107,8 +158,9 @@ const Header = (props) => {
                     key={genre.id}
                     onClick={() => {
                       setSelectedGenre(genre.name);
-                      onGenreSelect(genre);
+                      handleSelectedGenre(genre);
                     }}
+                    disabled={genre.name === selectedGenre}
                   >
                     {genre.name}
                   </DropdownItem>
@@ -118,16 +170,24 @@ const Header = (props) => {
           </GenreContainer>
         )}
 
-        {!FavouritesSectionOpen && (
+        {!favouritesSectionOpen && (
           <SortByContainer
             ref={sortByDropdownRef}
             onClick={handleSortByDropdown}
+            onFocus={handleSortByDropdown}
+            onBlur={handleSortByDropdown}
           >
             <DropdownTitle>Sort By</DropdownTitle>
             <SelectedDropdownValue>{selectedSortBy}</SelectedDropdownValue>
             <CarrotIconContainer>
-              <CarrotIconPlaceholder />
-              <CarrotIcon src={carrotIcon} />
+              <ImageLoader
+                src={carrotIcon}
+                width="10px"
+                placeholderSize="56.85%"
+                alt="carrot"
+                hover={true}
+                priority={true}
+              />
             </CarrotIconContainer>
 
             {sortByDropdownOpen && (
@@ -137,8 +197,9 @@ const Header = (props) => {
                     key={sortByOptions.indexOf(option)}
                     onClick={() => {
                       setSelectedSortBy(option);
-                      onSortBySelection(option);
+                      handleSelectedSortBy(option);
                     }}
+                    disabled={option.name === selectedSortBy}
                   >
                     {option}
                   </DropdownItem>
@@ -148,38 +209,44 @@ const Header = (props) => {
           </SortByContainer>
         )}
       </FilterSection>
-      <Link href="/">
-        <WebsiteTitleContainer>
-          <WebsiteTitle>Movies</WebsiteTitle>
+
+      <WebsiteTitleContainer onClick={handleOnClick}>
+        <WebsiteTitle>Movies</WebsiteTitle>
+        <PopcornContainer>
           <ImageLoader
             src={"https://chpistel.sirv.com/Images/popcorn-icon.png?w=60"}
             width="36px"
             placeholderSize="100%"
-            alt="popcorn-icon"
+            alt="popcorn"
             hover={true}
+            priority={true}
           />
-        </WebsiteTitleContainer>
-      </Link>
+        </PopcornContainer>
+      </WebsiteTitleContainer>
 
       <IconSection>
-        <InputContainer onSubmit={handleSubmit(onSubmit)} inputOpen={inputOpen}>
-          <SearchIconContainer onClick={handleInputOpen}>
+        <InputContainer
+          onSubmit={handleSubmit(onSubmit)}
+          inputOpen={inputOpen}
+          onFocus={() => setInputOpen(true)}
+          onBlur={() => setInputOpen(false)}
+        >
+          <SearchIconContainer inputOpen={inputOpen} onClick={handleInputOpen}>
             <ImageLoader
               src={searchIcon}
               width="22px"
-              placeholderSize="70%"
-              alt="searchIcon-icon"
+              placeholderSize="100%"
+              alt="search"
               hover={true}
+              priority={true}
             />
           </SearchIconContainer>
           <Input
-            name="SearchInput"
             placeholder="Search..."
+            {...register("search")}
             ref={(e) => {
-              // register(e);
-              searchRef.current = e; // you can still assign to ref
+              searchRef.current = e;
             }}
-            onChange={(e) => onChange(e.currentTarget.value)}
             inputOpen={inputOpen}
           />
         </InputContainer>
@@ -187,23 +254,26 @@ const Header = (props) => {
           <HeartIconContainer>
             <ImageLoader
               src={heartIcon}
-              width="27px"
-              placeholderSize="70%"
-              alt="heart-icon"
-              svgStartColor="invert(89%) sepia(7%) saturate(74%) hue-rotate(164deg) brightness(90%) contrast(87%);"
+              width="25px"
+              placeholderSize="100%"
+              alt="heart"
               hover={true}
+              priority={true}
             />
           </HeartIconContainer>
         </Link>
         <Link href="/about">
-          <ImageLoader
-            src={infoIcon}
-            width="26px"
-            placeholderSize="70%"
-            alt="heart-icon"
-            svgStartColor="invert(89%) sepia(7%) saturate(74%) hue-rotate(164deg) brightness(90%) contrast(87%);"
-            hover={true}
-          />
+          <AboutIconContainer>
+            <ImageLoader
+              src={infoIcon}
+              width="22px"
+              placeholderSize="100%"
+              alt="about"
+              svgStartColor="invert(89%) sepia(7%) saturate(74%) hue-rotate(164deg) brightness(90%) contrast(87%);"
+              hover={true}
+              priority={true}
+            />
+          </AboutIconContainer>
         </Link>
       </IconSection>
       <ResponsiveHeader />
@@ -223,7 +293,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: row;
   align-items: flex-end;
-  z-index: 4;
+  z-index: 100;
   position: fixed;
   @media (max-width: 632px) {
     height: 80px;
@@ -257,6 +327,9 @@ const MoviesLabel = styled.span`
   &:hover {
     cursor: pointer;
     color: white;
+  }
+  &:focus:not(:focus-visible) {
+    outline: none;
   }
   @media (max-width: 1024px) {
     display: none;
@@ -294,24 +367,9 @@ const CarrotIconContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-`;
-
-const CarrotIconPlaceholder = styled.div`
-  width: 100%;
-  padding-bottom: 56.25%;
-`;
-
-const CarrotIcon = styled.img`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-  transition: all 0.3s;
   filter: invert(93%) sepia(7%) saturate(71%) hue-rotate(169deg) brightness(86%)
     contrast(87%);
+  transition: all 0.3s;
 `;
 
 const GenreContainer = styled.div`
@@ -332,9 +390,9 @@ const GenreContainer = styled.div`
     ${FavouritesCounter} {
       cursor: default;
     }
-    ${CarrotIcon} {
+    ${CarrotIconContainer} {
       filter: invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg)
-        brightness(102%) contrast(105%);
+        brightness(102%) contrast(105%) !important;
     }
   }
 `;
@@ -346,6 +404,7 @@ const SortByContainer = styled.div`
   flex-direction: row;
   margin: 0px 15px 10px 18px;
   position: relative;
+  transition: all 0.3s;
   &:hover {
     cursor: pointer;
     ${DropdownTitle} {
@@ -353,7 +412,7 @@ const SortByContainer = styled.div`
     }
     ${SelectedDropdownValue} {
     }
-    ${CarrotIcon} {
+    ${CarrotIconContainer} {
       filter: invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg)
         brightness(102%) contrast(105%);
     }
@@ -394,6 +453,25 @@ const DropdownItem = styled.div`
   }
 `;
 
+const shake = keyframes`
+  0% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(10deg) translateY(-2px);
+  box-shadow: rgba(0, 0, 0, 0.15) 0px 15px 25px, rgba(0, 0, 0, 0.05) 0px 5px 10px;
+  }
+  60% {
+    transform: rotate(-10deg) translateY(-2px);
+  box-shadow: rgba(0, 0, 0, 0.15) 0px 15px 25px, rgba(0, 0, 0, 0.05) 0px 5px 10px;
+  }
+  100% {
+    transform: rotate(0deg) translateY(0px);
+  }
+`;
+
+const PopcornContainer = styled.div``;
+
 const WebsiteTitleContainer = styled.div`
   position: absolute;
   top: 10px;
@@ -407,6 +485,13 @@ const WebsiteTitleContainer = styled.div`
   justify-content: center;
   flex-direction: row;
   &:hover {
+    ${PopcornContainer} {
+      animation: ${shake} 0.57s infinite alternate;
+      animation-delay: 0.9s;
+    }
+  }
+
+  &:hover {
     cursor: default;
   }
   @media (max-width: 632px) {
@@ -418,6 +503,7 @@ const WebsiteTitle = styled.h1`
   margin: 0;
   margin-right: 12px;
   color: white;
+  letter-spacing: 0px;
   font-weight: 500;
   user-select: none;
   &:hover {
@@ -444,6 +530,19 @@ const SearchIconContainer = styled.div`
   align-items: center;
   justify-content: center;
   margin-left: 8px;
+  filter: ${({ inputOpen }) =>
+    inputOpen
+      ? "invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg) brightness(102%) contrast(105%);"
+      : "invert(93%) sepia(6%) saturate(90%) hue-rotate(169deg) brightness(88%) contrast(83%);"}
+  transition: 0.3s ease;
+  &:hover,
+  &:focus {
+    filter: invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg)
+      brightness(102%) contrast(105%);
+  }
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
 `;
 
 const InputContainer = styled.form`
@@ -476,7 +575,32 @@ const Input = styled.input`
   transition: all 0.3s;
 `;
 
-const HeartIconContainer = styled.div`
+const HeartIconContainer = styled.button`
+  filter: invert(93%) sepia(6%) saturate(90%) hue-rotate(169deg) brightness(88%)
+    contrast(83%);
+  transition: 0.3s ease;
   margin: 0px 12px;
-  margin-bottom: 2.2px;
+  margin-bottom: 1.2px;
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+  &:hover,
+  &:focus {
+    filter: invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg)
+      brightness(102%) contrast(105%);
+  }
+`;
+
+const AboutIconContainer = styled.button`
+  filter: invert(93%) sepia(6%) saturate(90%) hue-rotate(169deg) brightness(88%)
+    contrast(83%);
+  transition: 0.3s ease;
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+  &:hover,
+  &:focus {
+    filter: invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg)
+      brightness(102%) contrast(105%);
+  }
 `;
