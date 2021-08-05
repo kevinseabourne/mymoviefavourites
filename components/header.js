@@ -473,6 +473,7 @@ const shake = keyframes`
 const PopcornContainer = styled.div``;
 
 const WebsiteTitleContainer = styled.div`
+  width: 153px;
   position: absolute;
   top: 10px;
   left: 0;
