@@ -42,7 +42,7 @@ const TitleContainer = styled.div`
 `;
 
 const Title = styled.h1`
-  margin-top: 50px;
+  margin-top: 60px;
 `;
 
 const SubTitle = styled.h2`

@@ -8,11 +8,18 @@ const Title = styled.h1`
   color: ${({ theme }) => theme.colors.primary};
 `;
 
-export default function Home(props) {
-  const { movies } = useContext(AppContext);
+export default function Home() {
+  const { movies, status, handleGetMoreMovies, noSearchResult } = useContext(
+    AppContext
+  );
   return (
     <Container>
-      <Movies movies={movies} />
+      <Movies
+        movies={movies}
+        status={status}
+        noSearchResult={noSearchResult}
+        handleGetMoreMovies={handleGetMoreMovies}
+      />
     </Container>
   );
 }
