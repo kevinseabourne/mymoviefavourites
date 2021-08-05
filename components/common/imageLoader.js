@@ -23,7 +23,8 @@ const ImageLoader = ({
   hover,
   duration,
   boxShadow,
-  loadingSpinner, // true or false to show a loading spinner when the image is still loading
+  loadingSpinner,
+  priority, // true or false to show a loading spinner when the image is still loading
   centerImage,
   contentLoaded,
   handleOnLoadOutside,
@@ -55,7 +56,7 @@ const ImageLoader = ({
 
   const animation = {
     hidden: {
-      opacity: opacity == undefined ? 0 : opacity,
+      opacity: opacity == undefined ? 1 : opacity,
       y: y ? y : 0,
       x: x ? x : 0,
       scale: scale == undefined ? 1 : scale,
@@ -106,6 +107,7 @@ const ImageLoader = ({
           onLoadingComplete={handleLoadComplete}
           objectFit="fill"
           layout="fill"
+          priority={priority ? true : false}
         />
       )}
       {/* {loadingSpinner && !isLoaded && <LoadingSpinner size="39px" />} */}
@@ -146,5 +148,4 @@ const Placeholder = styled(motion.div)`
     placeholderColor ? placeholderColor : "transparent"};
   border-radius: ${({ borderRadius }) => (borderRadius ? borderRadius : "0px")};
   box-sizing: border-box;
-  border: 3.4px solid transparent;
 `;
