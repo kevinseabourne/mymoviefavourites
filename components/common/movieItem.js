@@ -1,30 +1,45 @@
-import { useState, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import AppContext from "../../context/appContext";
 import styled from "styled-components";
 import ImageLoader from "./imageLoader";
 import Link from "next/link";
+import { LoadingSpinner } from "./loadingSpinner";
 import Router from "next/router";
 import { motion } from "framer-motion";
 import ReactStars from "react-rating-stars-component";
 
-const MovieItem = ({ movie }) => {
+const MovieItem = ({ movie, status }) => {
   const { handleSelectedMovie, handleFavouriteSelected } = useContext(
     AppContext
   );
-  const [imageLoaded, setimageLoaded] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [movieInFavourites, setMovieInFavourites] = useState(false);
+  const loadingSpinnerRef = useRef(null);
 
-  const handleImageLoad = () => setimageLoaded(true);
+  const handleImageLoad = () => setImageLoaded(true);
 
-  const handleClick = (e, operation, movie) => {
-    if (operation === "selected" && movie) {
-      handleSelectedMovie(movie);
-      Router.push(
-        "/[id]",
-        movie.title.toLowerCase().replace(/[{L}!#$@#*+)(:;{}\s]/g, "-")
-      );
-    } else if (operation === "favourite") {
-      handleFavouriteSelected();
-    }
+  useEffect(() => {
+    // if (localStorage.getItem("favouriteMovies")) {
+    //   const favMovies = JSON.parse(localStorage.getItem("favouriteMovies"));
+    //   const movieInFavourites = favMovies.find(
+    //     (fMovie) => fMovie.id === movie.id
+    //   );
+    //   movieInFavourites
+    //     ? setMovieInFavourites(true)
+    //     : setMovieInFavourites(false);
+    // }
+  }, []);
+
+  useEffect(() => {
+    status === "pending" && setImageLoaded(false);
+  }, [status]);
+
+  const handleClick = (movie) => {
+    handleSelectedMovie(movie);
+    Router.push(
+      "/[id]",
+      movie.title.toLowerCase().replace(/[{L}!#$'"@`#*+)(:;{}\s]/g, "-")
+    );
   };
 
   const itemAnimation = {
@@ -64,41 +79,41 @@ const MovieItem = ({ movie }) => {
   const infoAnimation = {
     hidden: {
       opacity: 0,
-      staggerChildren: 0.9,
-      transition: {
-        type: "spring",
-        staggerChildren: 0.9,
-      },
     },
     show: {
       opacity: 1,
-      staggerChildren: 0.9,
       transition: {
         type: "spring",
-        staggerChildren: 2.9,
+        delay: 0.3,
       },
     },
   };
+
   return (
     <Container variants={itemAnimation}>
       <ImageContainer
-        onClick={(e) => handleClick(e, "selected", movie)}
+        onClick={() => handleClick(movie)}
         variants={placeholderAnimation}
         whileHover="hover"
         whileFocus="hover"
       >
-        <BackgroundFade variants={hoverInfoAnimation} />
+        {!imageLoaded && (
+          <LoadingSpinner marginTop="110px" ref={loadingSpinnerRef} />
+        )}
+        {imageLoaded && <BackgroundFade variants={hoverInfoAnimation} />}
         <FavouriteButton
-          onClick={(e) => handleClick(e, "favourite")}
+          tabIndex="0"
+          onClick={() => handleClick(movie)}
           variants={hoverInfoAnimation}
-          tabindex="0"
         >
-          <ImageLoader
-            src="/icons/heart_icon.svg"
-            width="30px"
-            placeholderSize="70%"
-            hover={true}
-          />
+          <HeartFilter movieInFavourites={movieInFavourites}>
+            <ImageLoader
+              src="/icons/heart_icon.svg"
+              width="25px"
+              placeholderSize="100%"
+              hover={true}
+            />
+          </HeartFilter>
         </FavouriteButton>
 
         <ImageLoader
@@ -107,6 +122,7 @@ const MovieItem = ({ movie }) => {
           width="202px"
           borderRadius="10px"
           placeholderSize="150%"
+          opacity={0}
           handleOnLoadOutside={handleImageLoad}
         />
         <MovieRatingContainer variants={hoverInfoAnimation}>
@@ -125,7 +141,7 @@ const MovieItem = ({ movie }) => {
       <InfoContainer
         variants={infoAnimation}
         initial="hidden"
-        animate={imageLoaded ? "show" : "hidden"}
+        animate={imageLoaded && status !== "pending" ? "show" : "hidden"}
       >
         <Title>{movie.title}</Title>
         <ReleaseDate>
@@ -155,6 +171,8 @@ const ImageContainer = styled(motion.button)`
   border-radius: 10px;
   background-color: transparent;
   border: 3.4px solid transparent;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   &:focus:not(:focus-visible) {
     outline: none;
   }
@@ -165,8 +183,17 @@ const BackgroundFade = styled(motion.div)`
   width: 100%;
   height: 100%;
   z-index: 1;
+  border-radius: 10px;
   opacity: 0;
   background-color: rgba(18, 18, 18, 0.7);
+`;
+
+const HeartFilter = styled(motion.div)`
+  transition: 0.3s ease;
+  filter: ${({ movieInFavourites }) =>
+    movieInFavourites
+      ? "invert(28%) sepia(18%) saturate(6055%) hue-rotate(339deg) brightness(98%) contrast(94%);"
+      : "invert(93%) sepia(6%) saturate(90%) hue-rotate(169deg) brightness(88%) contrast(83%);"};
 `;
 
 const FavouriteButton = styled(motion.div)`
@@ -177,6 +204,9 @@ const FavouriteButton = styled(motion.div)`
   right: 0;
   margin-top: 12px;
   margin-right: 16px;
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
 `;
 
 const MovieRatingContainer = styled(motion.div)`
@@ -202,7 +232,7 @@ const InfoContainer = styled(motion.div)`
   padding-top: 5px;
 `;
 
-const Title = styled.span`
+const Title = styled(motion.span)`
   olor: white;
   font-size: 1.1em;
   font-weight: 600;
@@ -214,7 +244,7 @@ const Title = styled.span`
   width: 12.5rem;
 `;
 
-const ReleaseDate = styled.span`
+const ReleaseDate = styled(motion.span)`
   color: #5b5b5b;
   font-size: 0.94em;
   font-weight: 500;
