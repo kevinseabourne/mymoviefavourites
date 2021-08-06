@@ -3,13 +3,14 @@ import { useRouter } from "next/router";
 import { useState, useEffect, useRef, useContext } from "react";
 import AppContext from "../context/appContext";
 import styled, { keyframes } from "styled-components";
+import { motion, AnimatePresence } from "framer-motion";
 // import { Tooltip, OverlayTrigger } from "react-bootstrap";
 // import Fade from "react-reveal/Fade";
 import { useForm } from "react-hook-form";
+import { Input } from "./common/input";
 import ResponsiveHeader from "./responsiveHeader";
 import ImageLoader from "../components/common/imageLoader";
 import carrotIcon from "../public/icons/carret-down-icon.svg";
-import searchIcon from "../public/icons/search-icon.svg";
 import heartIcon from "../public/icons/heart_icon.svg";
 import infoIcon from "../public/icons/info-circle-icon.svg";
 
@@ -40,8 +41,10 @@ const Header = ({
   const [dropdownHovering, setDropdownHovering] = useState(false);
   const [renderChangeOnce, setRenderChangeOnce] = useState(false);
 
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, watch, formState } = useForm();
   const { ref, ...rest } = register("search");
+
+  const searchInputValue = watch("search");
 
   useEffect(() => {
     window.addEventListener("mousedown", handleClickOutside);
@@ -89,7 +92,9 @@ const Header = ({
   };
 
   const handleInputOpen = () => {
-    searchRef.current.focus();
+    if (!inputOpen) {
+      searchRef.current.focus();
+    }
     setInputOpen(!inputOpen);
   };
 
@@ -138,6 +143,13 @@ const Header = ({
     closeAndClearInput();
   };
 
+  const handleIconBoxKeyDown = (e) => {
+    const key = e.key === 13 || e.keyCode === 13;
+    if (key) {
+      searchRef.current.value = "";
+      searchRef.current.focus();
+    }
+  };
   // const {
   // onGenreSelect,
   // onSortBySelection,
@@ -254,24 +266,13 @@ const Header = ({
           inputOpen={inputOpen}
           onFocus={() => setInputOpen(true)}
         >
-          <SearchIconContainer inputOpen={inputOpen} onClick={handleInputOpen}>
-            <ImageLoader
-              src={searchIcon}
-              width="22px"
-              placeholderSize="100%"
-              alt="search"
-              hover={true}
-              priority={true}
-            />
-          </SearchIconContainer>
           <Input
-            placeholder="Search..."
-            {...rest}
-            name="search"
-            ref={(e) => {
-              searchRef.current = e;
-            }}
+            ref={searchRef}
             inputOpen={inputOpen}
+            onClick={handleInputOpen}
+            searchInputValue={searchInputValue}
+            {...rest}
+            handleInputOpen={handleInputOpen}
           />
         </InputContainer>
 
@@ -548,28 +549,9 @@ const IconSection = styled.div`
   }
 `;
 
-const SearchIconContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 8px;
-  filter: ${({ inputOpen }) =>
-    inputOpen
-      ? "invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg) brightness(102%) contrast(105%);"
-      : "invert(93%) sepia(6%) saturate(90%) hue-rotate(169deg) brightness(88%) contrast(83%);"}
-  transition: 0.3s ease;
-  &:hover,
-  &:focus {
-    filter: invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg)
-      brightness(102%) contrast(105%);
-  }
-  &:focus:not(:focus-visible) {
-    outline: none;
-  }
-`;
-
 const InputContainer = styled.form`
   display: flex;
+  position: relative;
   justify-content: center;
   align-items: center;
   flex-direction: row;
@@ -577,25 +559,6 @@ const InputContainer = styled.form`
   border-radius: 10em;
   background-color: ${({ inputOpen }) =>
     inputOpen ? "rgb(12, 12, 12)" : "#17181b"};
-`;
-
-const Input = styled.input`
-  font-size: 17px;
-  font-weight: 400;
-  letter-spacing: 0.4;
-  outline: none;
-  margin: 1px 0px;
-  width: ${({ inputOpen }) => (inputOpen ? "253px" : "0px")};
-  height: 27px;
-  border: none;
-  color: #c3c5c7;
-  font-weight: 500;
-  padding-left: ${({ inputOpen }) => (inputOpen ? "7px" : "0px")};
-  overflow: hidden;
-  background-color: ${({ inputOpen }) =>
-    inputOpen ? "rgb(12, 12, 12)" : "#17181b"};
-  border-radius: 10em;
-  transition: all 0.3s;
 `;
 
 const HeartIconContainer = styled.button`
