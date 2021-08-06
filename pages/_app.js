@@ -292,6 +292,7 @@ export default function MyApp({
 
   const handleSearch = async (query) => {
     setSearching(true);
+    router.pathname !== "/" && router.push("/");
     // used to display a message saying 'no movies found' for a search result instead of a loading spinner
     if (router.pathname === "/favourites") {
       handleFavouritesSearch(query);
