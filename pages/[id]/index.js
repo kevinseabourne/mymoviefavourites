@@ -81,6 +81,9 @@ const MoviePage = (props) => {
           borderRadius={"10px"}
           placeholderSize={"150%"}
           centerImage={true}
+          opacity={0}
+          boxShadow="rgba(0, 0, 0, 0.35) 0px 5px 15px;"
+          loadingSpinner={true}
         />
         <InfoContainer>
           <Information>
