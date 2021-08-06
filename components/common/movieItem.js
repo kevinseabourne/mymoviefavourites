@@ -97,9 +97,6 @@ const MovieItem = ({ movie, status }) => {
         whileHover="hover"
         whileFocus="hover"
       >
-        {!imageLoaded && (
-          <LoadingSpinner marginTop="110px" ref={loadingSpinnerRef} />
-        )}
         {imageLoaded && <BackgroundFade variants={hoverInfoAnimation} />}
         <FavouriteButton
           tabIndex="0"
@@ -123,6 +120,9 @@ const MovieItem = ({ movie, status }) => {
           borderRadius="10px"
           placeholderSize="150%"
           opacity={0}
+          boxShadow="0 10px 15px -3px rgba(0, 0, 0, 0.1),
+            0 4px 6px -2px rgba(0, 0, 0, 0.05);"
+          loadingSpinner={true}
           handleOnLoadOutside={handleImageLoad}
         />
         <MovieRatingContainer variants={hoverInfoAnimation}>
@@ -141,7 +141,7 @@ const MovieItem = ({ movie, status }) => {
       <InfoContainer
         variants={infoAnimation}
         initial="hidden"
-        animate={imageLoaded && status !== "pending" ? "show" : "hidden"}
+        animate={imageLoaded ? "show" : "hidden"}
       >
         <Title>{movie.title}</Title>
         <ReleaseDate>
@@ -171,8 +171,6 @@ const ImageContainer = styled(motion.button)`
   border-radius: 10px;
   background-color: transparent;
   border: 3.4px solid transparent;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   &:focus:not(:focus-visible) {
     outline: none;
   }
