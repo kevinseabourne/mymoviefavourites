@@ -18,6 +18,7 @@ const Header = ({
   handleSelectedSortBy,
   handleSearch,
   genres,
+  searching,
 }) => {
   const router = useRouter();
   const genreDropdownRef = useRef(null);
@@ -38,7 +39,9 @@ const Header = ({
   const [inputOpen, setInputOpen] = useState(false);
   const [dropdownHovering, setDropdownHovering] = useState(false);
   const [renderChangeOnce, setRenderChangeOnce] = useState(false);
-  const { register, handleSubmit, reset } = useForm();
+
+  const { register, handleSubmit } = useForm();
+  const { ref, ...rest } = register("search");
 
   useEffect(() => {
     window.addEventListener("mousedown", handleClickOutside);
@@ -60,7 +63,9 @@ const Header = ({
   useEffect(() => {}, [selectedSortBy]);
 
   useEffect(() => {
-    inputOpen && reset();
+    if (!inputOpen) {
+      searchRef.current.value = "";
+    }
   }, [inputOpen]);
 
   const handleClickOutside = (e) => {
@@ -75,9 +80,6 @@ const Header = ({
       !sortByDropdownRef.current.contains(e.target)
     ) {
       setSortByDropdownOpen(false);
-    }
-    if (searchRef.current && !searchRef.current.contains(e.target)) {
-      setInputOpen(false);
     }
   };
 
@@ -99,9 +101,10 @@ const Header = ({
     setSortByDropdownOpen(!sortByDropdownOpen);
   };
 
-  const handleOnClick = () => {
+  const handleReturnHomeAndRest = () => {
+    // also if searching is true then do
     // the function reset the dropdown setting back to default and changes route to the home page
-    if (selectedGenre !== "All" || selectedSortBy !== "Trending") {
+    if (selectedGenre !== "All" || selectedSortBy !== "Trending" || searching) {
       // No need to call handleGenreBy because doing will make the same http request handleSelectedSortBy("All") is doing
       setSelectedGenre("All");
       setSelectedSortBy("Trending");
@@ -109,7 +112,30 @@ const Header = ({
       handleSelectedGenre("All");
       handleSelectedSortBy("Trending");
     }
+    closeAndClearInput();
     router.pathname !== "/" && router.push("/");
+  };
+
+  const closeAndClearInput = () => {
+    setInputOpen(false);
+    searchRef.current.value = "";
+  };
+
+  const handleSortByClick = (option) => {
+    if (
+      option === "Trending" ||
+      option === "Popular" ||
+      option === "Top Rated"
+    ) {
+      closeAndClearInput();
+    }
+    setSelectedSortBy(option);
+    handleSelectedSortBy(option);
+  };
+
+  const handleRouteChange = (route) => {
+    router.push(route);
+    closeAndClearInput();
   };
 
   // const {
@@ -126,7 +152,7 @@ const Header = ({
   return (
     <Container>
       <FilterSection>
-        <MoviesLabel onClick={handleOnClick} tabIndex="0">
+        <MoviesLabel onClick={handleReturnHomeAndRest} tabIndex="0">
           Movies
         </MoviesLabel>
 
@@ -157,6 +183,7 @@ const Header = ({
                   <DropdownItem
                     key={genre.id}
                     onClick={() => {
+                      genre.name === "All" && closeAndClearInput();
                       setSelectedGenre(genre.name);
                       handleSelectedGenre(genre);
                     }}
@@ -195,10 +222,7 @@ const Header = ({
                 {sortByOptions.map((option) => (
                   <DropdownItem
                     key={sortByOptions.indexOf(option)}
-                    onClick={() => {
-                      setSelectedSortBy(option);
-                      handleSelectedSortBy(option);
-                    }}
+                    onClick={() => handleSortByClick(option)}
                     disabled={option.name === selectedSortBy}
                   >
                     {option}
@@ -210,7 +234,7 @@ const Header = ({
         )}
       </FilterSection>
 
-      <WebsiteTitleContainer onClick={handleOnClick}>
+      <WebsiteTitleContainer onClick={handleReturnHomeAndRest}>
         <WebsiteTitle>Movies</WebsiteTitle>
         <PopcornContainer>
           <ImageLoader
@@ -229,7 +253,6 @@ const Header = ({
           onSubmit={handleSubmit(onSubmit)}
           inputOpen={inputOpen}
           onFocus={() => setInputOpen(true)}
-          onBlur={() => setInputOpen(false)}
         >
           <SearchIconContainer inputOpen={inputOpen} onClick={handleInputOpen}>
             <ImageLoader
@@ -243,38 +266,37 @@ const Header = ({
           </SearchIconContainer>
           <Input
             placeholder="Search..."
-            {...register("search")}
+            {...rest}
+            name="search"
             ref={(e) => {
               searchRef.current = e;
             }}
             inputOpen={inputOpen}
           />
         </InputContainer>
-        <Link href="/favourites">
-          <HeartIconContainer>
-            <ImageLoader
-              src={heartIcon}
-              width="25px"
-              placeholderSize="100%"
-              alt="heart"
-              hover={true}
-              priority={true}
-            />
-          </HeartIconContainer>
-        </Link>
-        <Link href="/about">
-          <AboutIconContainer>
-            <ImageLoader
-              src={infoIcon}
-              width="22px"
-              placeholderSize="100%"
-              alt="about"
-              svgStartColor="invert(89%) sepia(7%) saturate(74%) hue-rotate(164deg) brightness(90%) contrast(87%);"
-              hover={true}
-              priority={true}
-            />
-          </AboutIconContainer>
-        </Link>
+
+        <HeartIconContainer onClick={() => handleRouteChange("/favourites")}>
+          <ImageLoader
+            src={heartIcon}
+            width="25px"
+            placeholderSize="100%"
+            alt="heart"
+            hover={true}
+            priority={true}
+          />
+        </HeartIconContainer>
+
+        <AboutIconContainer onClick={() => handleRouteChange("/about")}>
+          <ImageLoader
+            src={infoIcon}
+            width="22px"
+            placeholderSize="100%"
+            alt="about"
+            svgStartColor="invert(89%) sepia(7%) saturate(74%) hue-rotate(164deg) brightness(90%) contrast(87%);"
+            hover={true}
+            priority={true}
+          />
+        </AboutIconContainer>
       </IconSection>
       <ResponsiveHeader />
     </Container>
