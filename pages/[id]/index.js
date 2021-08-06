@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { isArrayEmpty } from "../../components/common/utils/isEmpty";
 import { getVideoObject } from "../api/movies";
 import { LoadingSpinner } from "../../components/common/loadingSpinner";
@@ -57,6 +58,73 @@ const MoviePage = (props) => {
 
   const { handleFavouriteToggle } = props;
 
+  const containerAnimation = {
+    hidden: {
+      opacity: 0,
+    },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+        type: "spring",
+      },
+    },
+  };
+
+  const imageAnimation = {
+    hidden: {
+      opacity: 0,
+      x: -200,
+    },
+    show: {
+      x: 0,
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.6,
+        type: "spring",
+      },
+    },
+  };
+
+  const infoAnimation = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: 0.2,
+        type: "spring",
+      },
+    },
+  };
+
+  const fadeAnimation = {
+    hidden: {
+      opacity: 0,
+      x: 100,
+    },
+    show: {
+      opacity: 1,
+      x: 0,
+    },
+  };
+
+  const buttonAnimation = {
+    hidden: {
+      opacity: 0,
+      x: 100,
+    },
+    show: {
+      opacity: 0.79,
+      x: 0,
+      transition: {
+        duration: 0.1,
+        type: "spring",
+      },
+    },
+    hover: {
+      opacity: 1,
+    },
+  };
+
   return status === "pending" ? (
     <LoadingSpinner ref={loadingSpinnerRef} />
   ) : (
@@ -73,23 +141,29 @@ const MoviePage = (props) => {
           />
         </ExitButton>
       </Link>
-      <MovieContainer>
-        <ImageLoader
-          src={"https://image.tmdb.org/t/p/w780/" + selectedMovie.poster_path}
-          maxWidth="750px"
-          alt={selectedMovie.title}
-          borderRadius={"10px"}
-          placeholderSize={"150%"}
-          centerImage={true}
-          opacity={0}
-          boxShadow="rgba(0, 0, 0, 0.35) 0px 5px 15px;"
-          loadingSpinner={true}
-        />
-        <InfoContainer>
+      <MovieContainer
+        variant={containerAnimation}
+        initial="hidden"
+        animate="show"
+      >
+        <ImageContainer variants={imageAnimation}>
+          <ImageLoader
+            src={"https://image.tmdb.org/t/p/w780/" + selectedMovie.poster_path}
+            maxWidth="750px"
+            alt={selectedMovie.title}
+            borderRadius={"10px"}
+            placeholderSize={"150%"}
+            centerImage={true}
+            opacity={0}
+            boxShadow="rgba(0, 0, 0, 0.35) 0px 5px 15px;"
+            loadingSpinner={true}
+          />
+        </ImageContainer>
+        <InfoContainer variants={infoAnimation}>
           <Information>
             <InnerInformationContainer>
-              <Title>{selectedMovie.title}</Title>
-              <InfoBar>
+              <Title variants={fadeAnimation}>{selectedMovie.title}</Title>
+              <InfoBar variants={fadeAnimation}>
                 <ReleaseDate>{selectedMovie.release_date}</ReleaseDate>
 
                 <ReleatedGenresContainer
@@ -135,7 +209,9 @@ const MoviePage = (props) => {
                   />
                 </StarRating>
               </InfoBar>
-              <Description>{selectedMovie.overview}</Description>
+              <Description variants={fadeAnimation}>
+                {selectedMovie.overview}
+              </Description>
               <ResponsiveMovieDBLink
                 target="_blank"
                 rel="noopener noreferrer"
@@ -156,15 +232,20 @@ const MoviePage = (props) => {
                 />
               </ResponsiveMovieDBLink>
             </InnerInformationContainer>
-            <ButtonsContainer>
+            <ButtonsContainer variants={fadeAnimation}>
               {!noTrailer && (
-                <TrailerButton onClick={handleTrailerClick}>
+                <TrailerButton
+                  onClick={handleTrailerClick}
+                  variants={buttonAnimation}
+                  animate="show"
+                  whileHover="hover"
+                >
                   Watch Trailer
                 </TrailerButton>
               )}
               <ResponsiveExitFavContainer>
                 <Link href="/">
-                  <ResponsiveExitButton>
+                  <ResponsiveExitButton variants={fadeAnimation}>
                     <ImageLoader
                       src={crossIcon}
                       width="32.6px"
@@ -178,6 +259,8 @@ const MoviePage = (props) => {
                   </ResponsiveExitButton>
                 </Link>
                 <FavouritesButton
+                  variants={fadeAnimation}
+                  whileHover="hover"
                   onClick={() => handleFavouriteToggle(selectedMovie)}
                 >
                   <FavouriteIcon>
@@ -259,7 +342,7 @@ const ExitButton = styled.button`
   }
 `;
 
-const MovieContainer = styled.div`
+const MovieContainer = styled(motion.div)`
   display: grid;
   grid-template-columns: minmax(1px, 600px) minmax(300px, 800px);
   align-items: center;
@@ -275,7 +358,9 @@ const MovieContainer = styled.div`
   }
 `;
 
-const InfoContainer = styled.div`
+const ImageContainer = styled(motion.div)``;
+
+const InfoContainer = styled(motion.div)`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -291,7 +376,7 @@ const InfoContainer = styled.div`
   }
 `;
 
-const Information = styled.div`
+const Information = styled(motion.div)`
   width: 100%;
   height: 100%;
   display: flex;
@@ -309,9 +394,9 @@ const Information = styled.div`
   }
 `;
 
-const InnerInformationContainer = styled.div``;
+const InnerInformationContainer = styled(motion.div)``;
 
-const Title = styled.span`
+const Title = styled(motion.span)`
   align-self: flex-start;
   font-size: 3.6rem;
   font-weight: 500;
@@ -326,7 +411,7 @@ const Title = styled.span`
   }
 `;
 
-const InfoBar = styled.div`
+const InfoBar = styled(motion.div)`
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -338,7 +423,6 @@ const InfoBar = styled.div`
   margin-top: 10px;
   margin-bottom: 10px;
   @media (max-width: 1024px) {
-    ${"" /* padding: 0px 50px; */}
     box-sizing: border-box;
     margin-top: 10px;
     margin-bottom: 15px;
@@ -346,7 +430,7 @@ const InfoBar = styled.div`
   }
 `;
 
-const ReleaseDate = styled.span`
+const ReleaseDate = styled(motion.span)`
   margin-right: 40px;
   @media (max-width: 1024px) {
     margin-right: 0px;
@@ -357,7 +441,7 @@ const ReleaseDate = styled.span`
   }
 `;
 
-const ReleatedGenresContainer = styled.div`
+const ReleatedGenresContainer = styled(motion.div)`
   display: grid;
   justify-content: center;
   grid-template-columns: ${({ relatedGenresLength }) =>
@@ -374,7 +458,7 @@ const ReleatedGenresContainer = styled.div`
   }
 `;
 
-const Genres = styled.span`
+const Genres = styled(motion.span)`
   white-space: nowrap;
   text-align: center;
   @media (max-width: 1200px) {
@@ -382,7 +466,7 @@ const Genres = styled.span`
   }
 `;
 
-const MovieDBLink = styled.a`
+const MovieDBLink = styled(motion.a)`
   transition: all 0.3s;
   margin-left: 40px;
   opacity: 0.6;
@@ -397,7 +481,7 @@ const MovieDBLink = styled.a`
   }
 `;
 
-const StarRating = styled.div`
+const StarRating = styled(motion.div)`
   font-size: 22px;
   margin-left: 38px;
   white-space: nowrap;
@@ -406,7 +490,7 @@ const StarRating = styled.div`
   }
 `;
 
-const ResponsiveMovieDBLink = styled.a`
+const ResponsiveMovieDBLink = styled(motion.a)`
   transition: all 0.3s;
   opacity: 0.6;
   display: none;
@@ -423,7 +507,7 @@ const ResponsiveMovieDBLink = styled.a`
   }
 `;
 
-const Description = styled.p`
+const Description = styled(motion.p)`
   text-overflow: ellipsis;
   color: white;
   font-size: 1.2em;
@@ -440,7 +524,7 @@ const Description = styled.p`
   }
 `;
 
-const ButtonsContainer = styled.div`
+const ButtonsContainer = styled(motion.div)`
   display: flex;
   width: 100%;
   justify-content: flex-start;
@@ -454,7 +538,7 @@ const ButtonsContainer = styled.div`
   }
 `;
 
-const TrailerButton = styled.button`
+const TrailerButton = styled(motion.button)`
   font-size: 1em;
   text-decoration: none;
   cursor: pointer;
@@ -474,11 +558,6 @@ const TrailerButton = styled.button`
   &:focus:not(:focus-visible) {
     outline: none;
   }
-  &:hover {
-    transition-timing-function: ease-in-out;
-    transition-duration: 0.5s;
-    opacity: 1;
-  }
   @media (max-width: 1024px) {
     margin-right: 0px;
     order: 2;
@@ -488,7 +567,7 @@ const TrailerButton = styled.button`
   }
 `;
 
-const ResponsiveExitButton = styled.button`
+const ResponsiveExitButton = styled(motion.button)`
   display: none;
   background: transparent;
   border: none;
@@ -507,7 +586,7 @@ const ResponsiveExitButton = styled.button`
   }
 `;
 
-const ResponsiveExitFavContainer = styled.div`
+const ResponsiveExitFavContainer = styled(motion.div)`
   order: 2;
   @media (max-width: 1024px) {
     display: flex;
@@ -522,7 +601,7 @@ const ResponsiveExitFavContainer = styled.div`
   }
 `;
 
-const FavouritesButton = styled.button`
+const FavouritesButton = styled(motion.button)`
   padding: 0;
   opacity: 0.9;
   background-color: transparent;
@@ -546,7 +625,7 @@ const FavouritesButton = styled.button`
   }
 `;
 
-const FavouriteIcon = styled.div`
+const FavouriteIcon = styled(motion.div)`
   filter: invert(93%) sepia(6%) saturate(90%) hue-rotate(169deg) brightness(88%)
     contrast(83%);
   transition: 0.3s ease;
@@ -570,68 +649,11 @@ const FavouriteIcon = styled.div`
   }
 `;
 
-const FavouritesButtonLabel = styled.span`
+const FavouritesButtonLabel = styled(motion.span)`
   font-size: 1.1rem;
   font-weight: 500;
   color: white;
   @media (max-width: 1024px) {
     display: none;
-  }
-`;
-
-const TrailerContainer = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  background-color: rgba(15, 15, 15, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-top: 93px;
-  box-sizing: border-box;
-  transition: all 0.25s ease;
-
-  &.animateVideoOverlay-enter {
-    opacity: 0;
-  }
-  &.animateVideoOverlay-enter-active {
-    transition: all 0.25s ease;
-    opacity: 1;
-  }
-  &.animateVideoOverlay-exit {
-    opacity: 1;
-  }
-  &.animateVideoOverlay-exit-active {
-    opacity: 0;
-    transition: all 0.25s ease;
-  }
-`;
-
-const Trailer = styled.iframe`
-  height: 59%;
-  width: 65%;
-  padding-top: 77px;
-  box-shadow: 0px 17px 10px -10px rgba(0, 0, 0, 0.4);
-`;
-
-const VideoContainer = styled.div`
-  width: 1500px;
-  @media (max-height: 1000px) {
-    width: 1200px;
-  }
-  @media (max-height: 920px) {
-    width: 1100px;
-  }
-  @media (max-height: 800px) {
-    width: 700px;
-  }
-  @media (max-height: 520px) {
-    width: 550px;
-  }
-  @media (max-height: 432px) {
-    width: 400px;
   }
 `;
