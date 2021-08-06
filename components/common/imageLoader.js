@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Image from "next/image";
 import PropTypes from "prop-types";
 import styled from "styled-components";
 import { motion } from "framer-motion";
-// import { LoadingSpinner } from "../loading-spinner";
+import { LoadingSpinner } from "./loadingSpinner";
 // import { useInView } from "react-intersection-observer";
 // import "intersection-observer";
 
@@ -41,11 +41,7 @@ const ImageLoader = ({
   delay,
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-
-  // const { ref, inView } = useInView({
-  //   triggerOnce: true,
-  //   rootMargin: "150px 0px",
-  // });
+  const loadingSpinnerRef = useRef(null);
 
   const handleLoadComplete = () => {
     setIsLoaded(true);
@@ -77,45 +73,66 @@ const ImageLoader = ({
   };
 
   return (
-    <ImageContainer
+    <Container
+      boxShadow={boxShadow}
       borderRadius={borderRadius}
-      width={width}
-      hover={hover}
-      maxWidth={maxWidth}
-      centerImage={centerImage}
       marginTop={marginTop}
       marginBottom={marginBottom}
       marginLeft={marginLeft}
       marginRight={marginRight}
-      variants={animation}
-      initial="hidden"
-      animate={isLoaded ? "show" : "hidden"}
     >
-      <Placeholder
-        layout
+      <ImageContainer
         borderRadius={borderRadius}
-        onClick={onClick}
-        contentLoaded={contentLoaded}
-        zIndex={zIndex}
-        placeholderSize={placeholderSize}
-        placeholderColor={placeholderColor}
-      />
-      {src && (
-        <Image
-          src={src}
-          alt={alt}
-          onLoadingComplete={handleLoadComplete}
-          objectFit="fill"
-          layout="fill"
-          priority={priority ? true : false}
+        width={width}
+        hover={hover}
+        maxWidth={maxWidth}
+        centerImage={centerImage}
+        variants={animation}
+        initial="hidden"
+        animate={isLoaded ? "show" : "hidden"}
+      >
+        <Placeholder
+          layout
+          borderRadius={borderRadius}
+          onClick={onClick}
+          contentLoaded={contentLoaded}
+          zIndex={zIndex}
+          placeholderSize={placeholderSize}
+          placeholderColor={placeholderColor}
         />
+        {src && (
+          <Image
+            src={src}
+            alt={alt}
+            onLoadingComplete={handleLoadComplete}
+            objectFit="fill"
+            layout="fill"
+            priority={priority ? true : false}
+            variants={animation}
+            initial="hidden"
+            animate={isLoaded ? "show" : "hidden"}
+          />
+        )}
+      </ImageContainer>
+      {loadingSpinner && !isLoaded && (
+        <LoadingSpinner ref={loadingSpinnerRef} />
       )}
-      {/* {loadingSpinner && !isLoaded && <LoadingSpinner size="39px" />} */}
-    </ImageContainer>
+    </Container>
   );
 };
 
 export default ImageLoader;
+
+const Container = styled(motion.div)`
+  position: relative;
+  box-shadow: ${({ boxShadow }) => (boxShadow ? boxShadow : "none")};
+  margin-top: ${({ marginTop }) => (marginTop ? marginTop : "none")};
+  margin-bottom: ${({ marginBottom }) =>
+    marginBottom ? marginBottom : "none"};
+  margin-left: ${({ marginLeft }) => (marginLeft ? marginLeft : "none")};
+  margin-right: ${({ marginRight }) => (marginRight ? marginRight : "none")};
+  border-radius: ${({ borderRadius }) => (borderRadius ? borderRadius : "0px")};
+`;
 
 const ImageContainer = styled(motion.div)`
   display: flex;
@@ -126,11 +143,6 @@ const ImageContainer = styled(motion.div)`
   position: relative;
   background: transparent;
   margin: ${({ centerImage }) => (centerImage ? "auto" : "none")};
-  margin-top: ${({ marginTop }) => (marginTop ? marginTop : "none")};
-  margin-bottom: ${({ marginBottom }) =>
-    marginBottom ? marginBottom : "none"};
-  margin-left: ${({ marginLeft }) => (marginLeft ? marginLeft : "none")};
-  margin-right: ${({ marginRight }) => (marginRight ? marginRight : "none")};
   z-index: ${({ hoverColor }) => (hoverColor ? "auto" : "0")};
   border-radius: ${({ borderRadius }) => (borderRadius ? borderRadius : "0px")};
   overflow: ${({ src }) => (src ? "default" : "hidden")};
