@@ -15,33 +15,45 @@ import heartIcon from "../public/icons/heart_icon.svg";
 import infoIcon from "../public/icons/info-circle-icon.svg";
 
 const Header = ({
+  handleGetMovies,
   handleSelectedGenre,
+  handleGenreFilter,
   handleSelectedSortBy,
   handleSearch,
   genres,
   searching,
+  handleSearching,
 }) => {
   const router = useRouter();
   const genreDropdownRef = useRef(null);
   const sortByDropdownRef = useRef(null);
   const searchRef = useRef(null);
   const [genreDropdownOpen, setGenreDropdownOpen] = useState(false);
-  const [selectedGenre, setSelectedGenre] = useState("All");
+  const [selectedGenre, setSelectedGenre] = useState({
+    id: null,
+    name: "All",
+  });
   const [sortByDropdownOpen, setSortByDropdownOpen] = useState(false);
-  const [selectedSortBy, setSelectedSortBy] = useState("Trending");
-  const [sortByOptions, setSortByOptions] = useState([
-    "Trending",
-    "Popular",
-    "Top Rated",
-    "Year",
-    "Title",
-    "Rating",
+  const [selectedSortBy, setSelectedSortBy] = useState(
+    router.pathname === "/favourites"
+      ? { query: "primary_release_date.desc", title: "Year" }
+      : {
+          query: "",
+          title: "Trending",
+        }
+  );
+  const [sortByOptions] = useState([
+    { query: "", title: "Trending" },
+    { query: "popular", title: "Popular" },
+    { query: "vote_average.desc", title: "Top Rated" },
+    { query: "primary_release_date.desc", title: "Year" },
+    { query: "title.asc", title: "Title" },
   ]);
   const [inputOpen, setInputOpen] = useState(false);
   const [dropdownHovering, setDropdownHovering] = useState(false);
   const [renderChangeOnce, setRenderChangeOnce] = useState(false);
 
-  const { register, handleSubmit, watch, formState } = useForm();
+  const { register, handleSubmit, watch } = useForm();
   const { ref, ...rest } = register("search");
 
   const searchInputValue = watch("search");
@@ -55,10 +67,14 @@ const Header = ({
 
   useEffect(() => {
     if (router.pathname === "/favourites") {
-      !renderChangeOnce && setSelectedSortBy("Year");
+      !renderChangeOnce &&
+        setSelectedSortBy({
+          query: "primary_release_date.desc",
+          title: "Year",
+        });
       setRenderChangeOnce(true);
     } else if (!renderChangeOnce) {
-      !renderChangeOnce && setSelectedSortBy("Trending");
+      !renderChangeOnce && setSelectedSortBy({ query: "", title: "Trending" });
       setRenderChangeOnce(true);
     }
   });
@@ -88,6 +104,13 @@ const Header = ({
 
   const onSubmit = (query) => {
     const { search } = query;
+
+    if (searching && selectedGenre.name !== "All") {
+      setSelectedGenre({
+        id: null,
+        name: "All",
+      });
+    }
     query && handleSearch(search);
   };
 
@@ -109,16 +132,24 @@ const Header = ({
   const handleReturnHomeAndRest = () => {
     // also if searching is true then do
     // the function reset the dropdown setting back to default and changes route to the home page
-    if (selectedGenre !== "All" || selectedSortBy !== "Trending" || searching) {
+    if (selectedSortBy !== "Trending" || searching) {
       // No need to call handleGenreBy because doing will make the same http request handleSelectedSortBy("All") is doing
-      setSelectedGenre("All");
-      setSelectedSortBy("Trending");
-      handleSelectedGenre({ id: null, name: "All" });
-      handleSelectedGenre("All");
-      handleSelectedSortBy("Trending");
+      // handleSelectedGenre({ id: null, name: "All" });
+      // handleSelectedSortBy("Trending");
     }
     closeAndClearInput();
-    router.pathname !== "/" && router.push("/");
+    setSelectedGenre({ id: null, name: "All" });
+    setSelectedSortBy({ query: "", title: "Trending" });
+
+    // ------------------------ Bug Fixed ------------------------ //
+    // * If a genre was selected which was not 'All' and then you pressed either home button
+    //   it would display trending movies but not 'All', to prevent this I changed the first argument below from false to
+    //   the 'All' genre object.
+    handleGetMovies(
+      { query: null, title: "All" },
+      { query: "", title: "Trending" }
+    );
+    router.push("/");
   };
 
   const closeAndClearInput = () => {
@@ -127,15 +158,20 @@ const Header = ({
   };
 
   const handleSortByClick = (option) => {
-    if (
-      option === "Trending" ||
-      option === "Popular" ||
-      option === "Top Rated"
-    ) {
-      closeAndClearInput();
+    if (router.pathname !== "/" && router.pathname !== "/favourites") {
+      router.push("/");
     }
     setSelectedSortBy(option);
-    handleSelectedSortBy(option);
+
+    if (searching) {
+      if (option.title === "Trending" || option.title === "Popular") {
+        closeAndClearInput();
+        handleGetMovies(false, option);
+      }
+      handleSelectedSortBy(option);
+    } else {
+      handleGetMovies(false, option);
+    }
   };
 
   const handleRouteChange = (route) => {
@@ -178,7 +214,7 @@ const Header = ({
             onBlur={handleGenreDropdown}
           >
             <DropdownTitle>Genre</DropdownTitle>
-            <SelectedDropdownValue>{selectedGenre}</SelectedDropdownValue>
+            <SelectedDropdownValue>{selectedGenre.name}</SelectedDropdownValue>
             <CarrotIconContainer>
               <ImageLoader
                 src={carrotIcon}
@@ -195,11 +231,13 @@ const Header = ({
                   <DropdownItem
                     key={genre.id}
                     onClick={() => {
-                      genre.name === "All" && closeAndClearInput();
-                      setSelectedGenre(genre.name);
-                      handleSelectedGenre(genre);
+                      setSelectedGenre(genre);
+
+                      searching
+                        ? handleGenreFilter(genre)
+                        : handleGetMovies(genre, false);
                     }}
-                    disabled={genre.name === selectedGenre}
+                    disabled={genre.name === selectedGenre.name}
                   >
                     {genre.name}
                   </DropdownItem>
@@ -217,7 +255,9 @@ const Header = ({
             onBlur={handleSortByDropdown}
           >
             <DropdownTitle>Sort By</DropdownTitle>
-            <SelectedDropdownValue>{selectedSortBy}</SelectedDropdownValue>
+            <SelectedDropdownValue>
+              {selectedSortBy.title}
+            </SelectedDropdownValue>
             <CarrotIconContainer>
               <ImageLoader
                 src={carrotIcon}
@@ -235,9 +275,9 @@ const Header = ({
                   <DropdownItem
                     key={sortByOptions.indexOf(option)}
                     onClick={() => handleSortByClick(option)}
-                    disabled={option.name === selectedSortBy}
+                    disabled={option.title === selectedSortBy.title}
                   >
-                    {option}
+                    {option.title}
                   </DropdownItem>
                 ))}
               </Dropdown>
@@ -509,14 +549,11 @@ const WebsiteTitleContainer = styled.div`
   justify-content: center;
   flex-direction: row;
   &:hover {
+    cursor: pointer;
     ${PopcornContainer} {
       animation: ${shake} 0.57s infinite alternate;
       animation-delay: 0.9s;
     }
-  }
-
-  &:hover {
-    cursor: default;
   }
   @media (max-width: 632px) {
     top: 18px;
