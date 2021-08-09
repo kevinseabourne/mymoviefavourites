@@ -12,34 +12,28 @@ const MovieItem = ({ movie, status }) => {
   const { handleSelectedMovie, handleFavouriteSelected } = useContext(
     AppContext
   );
+  const imageContainerRef = useRef(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [focus, setFocus] = useState(false);
   const [movieInFavourites, setMovieInFavourites] = useState(false);
   const loadingSpinnerRef = useRef(null);
 
   const handleImageLoad = () => setImageLoaded(true);
 
   useEffect(() => {
-    // if (localStorage.getItem("favouriteMovies")) {
-    //   const favMovies = JSON.parse(localStorage.getItem("favouriteMovies"));
-    //   const movieInFavourites = favMovies.find(
-    //     (fMovie) => fMovie.id === movie.id
-    //   );
-    //   movieInFavourites
-    //     ? setMovieInFavourites(true)
-    //     : setMovieInFavourites(false);
-    // }
-  }, []);
-
-  useEffect(() => {
     status === "pending" && setImageLoaded(false);
   }, [status]);
 
-  const handleClick = (movie) => {
+  const handleItemClick = (movie) => {
     handleSelectedMovie(movie);
     Router.push(
       "/[id]",
       movie.title.toLowerCase().replace(/[{L}!#$'"@`#*+)(:;{}\s]/g, "-")
     );
+  };
+
+  const handleFavouriteClick = (movie) => {
+    handleFavouriteSelected(movie);
   };
 
   const itemAnimation = {
@@ -54,24 +48,50 @@ const MovieItem = ({ movie, status }) => {
   };
 
   const placeholderAnimation = {
+    hidden: {
+      backgroundColor: "rgba(18, 18, 18, 0)",
+      border: "3.4px solid rgba(18, 18, 18, 0)",
+      transition: {
+        type: "spring",
+        duration: 0.3,
+        bounce: 0,
+      },
+    },
     hover: {
       backgroundColor: "rgba(18, 18, 18, 0.7)",
       border: "3.4px solid #2d72d9",
       transition: {
         type: "spring",
-        duration: 0.4,
-
+        duration: 0.3,
         bounce: 0,
       },
     },
   };
 
   const hoverInfoAnimation = {
+    hidden: {
+      opacity: 0,
+    },
     hover: {
+      scale: 1,
       opacity: 1,
       transition: {
         type: "spring",
-        duration: 0.4,
+        bounce: 0,
+      },
+    },
+  };
+
+  const favButtonAnimation = {
+    hidden: {
+      opacity: 0,
+    },
+    hover: {
+      scale: 1,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        bounce: 0,
       },
     },
   };
@@ -85,6 +105,7 @@ const MovieItem = ({ movie, status }) => {
       transition: {
         type: "spring",
         delay: 0.3,
+        bounce: 0,
       },
     },
   };
@@ -92,26 +113,39 @@ const MovieItem = ({ movie, status }) => {
   return (
     <Container variants={itemAnimation}>
       <ImageContainer
-        onClick={() => handleClick(movie)}
+        ref={imageContainerRef}
+        onClick={() => handleItemClick(movie)}
         variants={placeholderAnimation}
-        whileHover="hover"
-        whileFocus="hover"
+        whileHover={imageLoaded ? "hover" : "hidden"}
+        initial="hidden"
+        animate={imageLoaded && focus ? "hover" : "hidden"}
+        onFocus={() => setFocus(true)}
+        onBlur={(e) =>
+          e.currentTarget.contains(e.relatedTarget)
+            ? setFocus(true)
+            : setFocus(false)
+        }
       >
         {imageLoaded && <BackgroundFade variants={hoverInfoAnimation} />}
-        <FavouriteButton
-          tabIndex="0"
-          onClick={() => handleClick(movie)}
-          variants={hoverInfoAnimation}
-        >
-          <HeartFilter movieInFavourites={movieInFavourites}>
-            <ImageLoader
-              src="/icons/heart_icon.svg"
-              width="25px"
-              placeholderSize="100%"
-              hover={true}
-            />
-          </HeartFilter>
-        </FavouriteButton>
+        {imageLoaded && (
+          <FavouriteButton
+            tabIndex="0"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleFavouriteClick(movie);
+            }}
+            variants={favButtonAnimation}
+          >
+            <HeartFilter movieInFavourites={movieInFavourites}>
+              <ImageLoader
+                src="/icons/heart_icon.svg"
+                width="25px"
+                placeholderSize="100%"
+                hover={true}
+              />
+            </HeartFilter>
+          </FavouriteButton>
+        )}
 
         <ImageLoader
           key={movie.poster_path}
@@ -125,18 +159,20 @@ const MovieItem = ({ movie, status }) => {
           loadingSpinner={true}
           handleOnLoadOutside={handleImageLoad}
         />
-        <MovieRatingContainer variants={hoverInfoAnimation}>
-          <ReactStars
-            value={movie.vote_average / 2}
-            count={5}
-            isHalf={true}
-            size={24}
-            activeColor="#ffd700"
-            color="#D1D5DB"
-            edit={false}
-          />
-          <DecimalRating>{movie.vote_average}</DecimalRating>
-        </MovieRatingContainer>
+        {imageLoaded && (
+          <MovieRatingContainer variants={hoverInfoAnimation}>
+            <ReactStars
+              value={movie.vote_average / 2}
+              count={5}
+              isHalf={true}
+              size={24}
+              activeColor="#ffd700"
+              color="#D1D5DB"
+              edit={false}
+            />
+            <DecimalRating>{movie.vote_average}</DecimalRating>
+          </MovieRatingContainer>
+        )}
       </ImageContainer>
       <InfoContainer
         variants={infoAnimation}
@@ -197,7 +233,6 @@ const HeartFilter = styled(motion.div)`
 const FavouriteButton = styled(motion.div)`
   position: absolute;
   top: 0;
-  opacity: 0;
   z-index: 20;
   right: 0;
   margin-top: 12px;
