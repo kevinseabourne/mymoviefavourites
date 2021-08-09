@@ -4,12 +4,7 @@ import Header from "../components/header";
 import { useRouter } from "next/router";
 import AppContext from "../context/appContext";
 import { getGenres } from "./api/genres";
-import {
-  getTrendingMovies,
-  getPopularOrTopRatedMovies,
-  getGenreMovies,
-  textSearchMovies,
-} from "./api/movies";
+import { getMovies, getTrendingMovies, textSearchMovies } from "./api/movies";
 import { GlobalStyle } from "../globalStyle";
 import styled, { ThemeProvider } from "styled-components";
 import { isArrayEmpty } from "../components/common/utils/isEmpty";
@@ -29,78 +24,134 @@ export default function MyApp({
   const router = useRouter();
   const ref = useRef(null);
   const [status, setStatus] = useState("idle");
-  const [dataTitle, setDataTitle] = useState("Trending");
   const [movies, setMovies] = useState([]);
-  const [favourites, setFavourites] = useState([]);
+  const [initialSearchResultMovies, setInitialSearchResultMovies] = useState(
+    []
+  );
+
+  const [favouriteMovies] = useState(() => {
+    const lsFavouriteMovies =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("favouriteMovies")
+        : null;
+    return lsFavouriteMovies !== null ? JSON.parse(lsFavouriteMovies) : [];
+  });
   const [genres, setGenres] = useState([]);
-  const [secondGenreFilter, setSecondGenreFilter] = useState(false);
-  const [secondSortByFilter, setSecondSortByFilter] = useState(false);
-  const [selectedGenre, setSelectedGenre] = useState("Trending");
+  const [selectedGenre, setSelectedGenre] = useState({ id: null, name: "All" });
+  const [selectedSortBy, setSelectedSortBy] = useState({
+    query: "",
+    title: "Trending",
+  });
   const [searching, setSearching] = useState(false);
   const [noSearchResult, setNoSearchResult] = useState(false);
-  // const [page, setPage] = useState(1);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     setGenres(allGenres);
     setMovies(allTrendingMovies);
+
     // window.addEventListener("scroll", getMoreMovies);
     // return () => window.removeEventListener("scroll", getMoreMovies);
   }, []);
 
-  // ------------------------ Genre ------------------------ //
+  // ------------------------ Genre Filter & Sort By ------------------------ //
 
-  // secondGenreFilter
-  // If false, it allows the current data to be filtered without making a data request
-  // if true a data request will be made for the current data title which could be either Trending, Popular or Top Rated
-  // this is to avoid filtering data that has already been filtered.
-
-  const handleSelectedGenre = (selected) => {
-    const genresClone = [...genres];
-    const selectedGenre = genresClone.find((genre) => genre.name === selected);
-
-    setSelectedGenre(selected.name);
-    if (selected.name === "All") {
-      handleSelectedSortBy(dataTitle);
+  const handleGenreId = (newSelectedGenre) => {
+    let genreId = "";
+    if (newSelectedGenre) {
+      setSelectedGenre(newSelectedGenre);
+      if (newSelectedGenre.name === "All") {
+        genreId = null;
+      } else {
+        genreId = newSelectedGenre.id;
+      }
     } else {
-      handleGenreFilter(selected);
+      if (newSelectedGenre.name === "All") {
+        genreId = null;
+      } else {
+        genreId = selectedGenre.id;
+      }
     }
+    return genreId;
   };
 
-  const handleGenreFilter = async (selectedGenre) => {
-    // const filteredMovies = movies.filter((m) => {
-    //   const genreIdsClone = [...m.genre_ids];
-    //   console.log(selectedGenre);
-    //   const answer = genreIdsClone.find((id) => id === selectedGenre.id);
-    //   return answer;
-    //
-    //   // return _.includes(m.genre_ids, selectedGenre.id);
-    // });
-    // setMovies(filteredMovies);
-    const response = await getGenreMovies(1, selectedGenre.id);
+  const handleSortBy = (newSelectedSortBy) => {
+    let sortBy = "";
+    if (newSelectedSortBy) {
+      setSelectedSortBy(newSelectedSortBy);
+      sortBy = newSelectedSortBy.query;
+    } else {
+      sortBy = selectedSortBy.query;
+    }
+    return sortBy;
+  };
 
+  const handleGetMovies = async (newSelectedGenre, newSelectedSortBy) => {
+    setStatus("pending");
+    let response = [];
+    if (
+      newSelectedSortBy.title === "Trending" ||
+      newSelectedSortBy.title === "Popular"
+    ) {
+      setSearching(false);
+      setNoSearchResult(false);
+
+      router.pathname !== "/" && router.push("/");
+    }
+    // when a genre is selected in search results of favourites then you return to home it is not
+    // resetting the genre to all
+    if (
+      selectedGenre.name === "All" &&
+      newSelectedSortBy.title === "Trending"
+    ) {
+      response = await getTrendingMovies(page);
+    } else {
+      const genreId = handleGenreId(newSelectedGenre);
+      const sortByQuery = handleSortBy(newSelectedSortBy);
+      response = await getMovies(page, genreId, sortByQuery);
+    }
     if (response) {
-      // movies are reset to empty to allow for animation
       setMovies([]);
       setMovies(response);
+      setStatus("resolved");
     }
   };
 
-  // ------------------------ Sort By ------------------------ //
-  // secondSortByFilter
-  // If false, it allows the current data to be filtered without making a data request
-  // if true a data request will be made for the current data title which could be either Trending, Popular or Top Rated
-  // this is to avoid filtering data that has already been filtered.
+  // ------------------------ Search Results Filtering & Favourites Filtering ------------------------ //
 
-  const handleSelectedSortBy = (selected) => {
-    switch (selected) {
-      case "Trending":
-        handleGetTrendingMovies();
-        break;
-      case "Popular":
-        handleGetPopularMovies();
-        break;
+  const handleGenreFilter = (newSelectedGenre) => {
+    setSelectedGenre(newSelectedGenre);
+
+    if (newSelectedGenre.name !== "All") {
+      const array =
+        router.pathname === "/favourites"
+          ? favouriteMovies
+          : initialSearchResultMovies;
+
+      // Prevent the movies data from being filtered over and over I stored the inital search results in a seperate state to use for every genre filter.
+      const filteredMovies = array.filter((m) => {
+        const genreIdsClone = [...m.genre_ids];
+        const answer = genreIdsClone.find((id) => id === newSelectedGenre.id);
+        return answer;
+      });
+      // if you filter the movies and there are no movies that match then instead of showing a loading spinner is show a message saying no movies
+      isArrayEmpty(filteredMovies)
+        ? setNoSearchResult(false)
+        : setNoSearchResult(true);
+      // movies are reset to empty to allow for animation
+      setMovies([]);
+      setMovies(filteredMovies);
+    } else {
+      setMovies([]);
+      setMovies(initialSearchResultMovies);
+    }
+  };
+
+  const handleSelectedSortBy = (newSelectedSortBy) => {
+    setSelectedSortBy(newSelectedSortBy);
+    switch (newSelectedSortBy.title) {
       case "Top Rated":
-        handleGetTopRatedMovies();
+        handleTopRatedFilter();
         break;
       case "Year":
         handleYearFilter();
@@ -108,85 +159,28 @@ export default function MyApp({
       case "Title":
         handleTitleFilter();
         break;
-      case "Rating":
-        handleRatingFilter();
-        break;
 
       default:
     }
   };
 
-  const handleGetTrendingMovies = async () => {
-    router.pathname === "/favourites" && router.push("/");
-    setSearching(false);
-    setStatus("pending");
-    const trendingMovies = await getTrendingMovies(1);
-    if (trendingMovies) {
-      setNoSearchResult(false);
-      if (secondSortByFilter) {
-        setSecondSortByFilter(false);
-        setStatus("resolved");
-        return trendingMovies;
-      } else {
-        // movies are reset to empty to allow for animation
-        setMovies([]);
-        setDataTitle("Trending");
-        setMovies(trendingMovies);
-        setSecondSortByFilter(false);
-        setStatus("resolved");
-      }
-    }
-  };
+  const handleTopRatedFilter = () => {
+    // Sorts the favourite movies and movies from search results based on the movie rating in descending order.
+    const moviesClone = [...movies];
 
-  const handleGetPopularMovies = async () => {
-    router.pathname === "/favourites" && router.push("/");
-    setSearching(false);
-    setStatus("pending");
-    const popularMovies = await getPopularOrTopRatedMovies(1, "popular");
-    if (popularMovies) {
-      setNoSearchResult(false);
-      if (secondSortByFilter) {
-        setSecondSortByFilter(false);
-        setStatus("resolved");
-        return popularMovies;
-      } else {
-        // movies are reset to empty to allow for animation
-        setMovies([]);
-        setDataTitle("Popular");
-        setMovies(popularMovies);
-        setSecondSortByFilter(false);
-        setStatus("resolved");
-      }
-    }
-  };
+    const filteredMovies = moviesClone
+      .sort((a, b) => {
+        return a.vote_average - b.vote_average;
+      })
+      .reverse();
 
-  const handleGetTopRatedMovies = async () => {
-    router.pathname === "/favourites" && router.push("/");
-    setSearching(false);
-    setStatus("pending");
-    const topRatedMovies = await getPopularOrTopRatedMovies(1, "top_rated");
-    if (topRatedMovies) {
-      setNoSearchResult(false);
-      if (secondSortByFilter) {
-        setSecondSortByFilter(false);
-        setStatus("resolved");
-        return topRatedMovies;
-      } else {
-        // movies are reset to empty to allow for animation
-        setMovies([]);
-        setDataTitle("Top Rated");
-        setMovies(topRatedMovies);
-        setSecondSortByFilter(false);
-        setStatus("resolved");
-      }
-    }
+    // movies are reset to empty to allow for animation
+    setMovies([]);
+    setMovies(filteredMovies);
   };
 
   const handleYearFilter = () => {
-    // Sorts the movies from newest - oldest when you sort by Year
-    // movies are reset to empty to allow for animation
-    setStatus("pending");
-    setMovies([]);
+    // Sorts the favourite movies from newest - oldest when you sort by Year
     const moviesClone = [...movies];
     const filteredMovies = moviesClone
       .sort((a, b) => {
@@ -195,42 +189,21 @@ export default function MyApp({
         );
       })
       .reverse();
-
+    // movies are reset to empty to allow for animation
+    setMovies([]);
     setMovies(filteredMovies);
-    setSecondSortByFilter(true);
-    setStatus("resolved");
   };
 
   const handleTitleFilter = () => {
-    // Sorts the movies in alphabetical order from a - z
-    setStatus("pending");
-    setMovies([]);
+    // Sorts the favourite movies and movies from search results in alphabetical order from a - z
     const moviesClone = [...movies];
     const filteredMovies = moviesClone.sort((a, b) => {
       return a.title.localeCompare(b.title);
     });
+
     // movies are reset to empty to allow for animation
-
-    setMovies(filteredMovies);
-    setSecondSortByFilter(true);
-    setStatus("resolved");
-  };
-
-  const handleRatingFilter = () => {
-    // Sorts the movies from highest rating - lowest rating when you sort by Rating
-    setStatus("pending");
     setMovies([]);
-    const moviesClone = [...movies];
-
-    const filteredMovies = moviesClone
-      .sort((a, b) => {
-        return a.vote_average - b.vote_average;
-      })
-      .reverse();
-    // movies are reset to empty to allow for animation
-
     setMovies(filteredMovies);
-    setSecondSortByFilter(true);
     setStatus("resolved");
   };
 
@@ -247,16 +220,11 @@ export default function MyApp({
     const favMovies = localStorage.getItem("favouriteMovies")
       ? JSON.parse(localStorage.getItem("favouriteMovies"))
       : [];
-    let addFavMovie = false;
     if (isArrayEmpty(favMovies)) {
-      const deletedMovieFromFavMovies = favMovies.map((movie) => {
-        if (movie.id === favMovie.id) {
-          addFavMovie = true;
-          // delete movie;
-        }
+      const deletedMovieFromFavMovies = favMovies.filter((movie) => {
+        return movie.id !== favMovie.id;
       });
-      if (addFavMovie) {
-        // const  moviesClone.find((m) => m.id === selectedMovie.id)
+      if (favMovies.length === deletedMovieFromFavMovies.length) {
         const updatedFavMovies = [...favMovies, favMovie];
         localStorage.setItem(
           "favouriteMovies",
@@ -302,8 +270,8 @@ export default function MyApp({
       if (isArrayEmpty(response)) {
         setNoSearchResult(false);
         setMovies([]);
-        console.log("search result", response);
         setMovies(response);
+        setInitialSearchResultMovies(response);
         setStatus("resolved");
       } else {
         setNoSearchResult(true);
@@ -323,9 +291,13 @@ export default function MyApp({
             movie.toLowerCase().includes(cleanQuery)
           );
         });
-        setFavourites(searchedFavMovies);
+        setMovies(searchedFavMovies);
       }
     }
+  };
+
+  const handleSearching = () => {
+    setSearching(false);
   };
 
   // ------------------------ Infinite Scroll ------------------------ //
@@ -362,9 +334,11 @@ export default function MyApp({
         <Header
           genres={genres}
           handleSearch={handleSearch}
+          handleGetMovies={handleGetMovies}
+          handleGenreFilter={handleGenreFilter}
           handleSelectedSortBy={handleSelectedSortBy}
-          handleSelectedGenre={handleSelectedGenre}
           searching={searching}
+          handleSearching={handleSearching}
         />
         <CompenentMargin>
           <GlobalStyle />
