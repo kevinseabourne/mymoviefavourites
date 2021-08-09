@@ -1,21 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import AppContext from "../context/appContext";
 import { isArrayEmpty } from "../components/common/utils/isEmpty";
 import Movies from "../components/common/movies";
 import styled from "styled-components";
 
 const Favourites = () => {
-  const [favMovies, setFavMovies] = useState([]);
-  useEffect(() => {
-    const favMovies = localStorage.getItem("favouriteMovies")
-      ? JSON.parse(localStorage.getItem("favouriteMovies"))
-      : [];
-    isArrayEmpty(favMovies) && setFavMovies(favMovies);
-  }, []);
+  const { movies, status } = useContext(AppContext);
 
   return (
     <Container>
-      {isArrayEmpty(favMovies) ? (
-        <Movies movies={favMovies} />
+      {isArrayEmpty(movies) ? (
+        <Movies movies={movies} />
       ) : (
         <TitleContainer>
           <Title>No Favourite Movies...</Title>
