@@ -13,9 +13,6 @@ import ReactStars from "react-rating-stars-component";
 
 const MoviePage = (props) => {
   const loadingSpinnerRef = useRef(null);
-  // const initialSelectedMovie =
-  // JSON.parse(localStorage.getItem("selectedMovie")) || 0;
-  // const [selectedMovie] = useState(initialSelectedMovie);
   const [selectedMovie, setSelectedMovie] = useState({});
   const [status, setStatus] = useState("idle");
   const [trailerKey, setTrailerKey] = useState(null);
@@ -34,7 +31,6 @@ const MoviePage = (props) => {
       if (data) {
         if (isArrayEmpty(data.results)) {
           const { results } = data;
-          console.log(results);
           const trailer = results.find((t) => t.type === "Trailer");
 
           setTrailerKey(trailer.key);
@@ -74,14 +70,20 @@ const MoviePage = (props) => {
   const imageAnimation = {
     hidden: {
       opacity: 0,
-      x: -200,
+      x: -100,
+      rotateY: -20,
+      skewY: -5,
     },
     show: {
       x: 0,
+      rotateY: 0,
+      skewY: 0,
       opacity: 1,
       transition: {
-        staggerChildren: 0.6,
+        staggerChildren: 0.2,
         type: "spring",
+        bounce: 0,
+        duration: 1,
       },
     },
   };
@@ -90,8 +92,7 @@ const MoviePage = (props) => {
     hidden: {},
     show: {
       transition: {
-        staggerChildren: 0.2,
-        type: "spring",
+        staggerChildren: 0.1,
       },
     },
   };
@@ -104,6 +105,10 @@ const MoviePage = (props) => {
     show: {
       opacity: 1,
       x: 0,
+      transition: {
+        type: "spring",
+        bounce: 0,
+      },
     },
   };
 
@@ -118,6 +123,7 @@ const MoviePage = (props) => {
       transition: {
         duration: 0.1,
         type: "spring",
+        bounce: 0,
       },
     },
     hover: {
@@ -396,7 +402,7 @@ const Information = styled(motion.div)`
 
 const InnerInformationContainer = styled(motion.div)``;
 
-const Title = styled(motion.span)`
+const Title = styled(motion.div)`
   align-self: flex-start;
   font-size: 3.6rem;
   font-weight: 500;
