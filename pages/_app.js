@@ -47,12 +47,16 @@ export default function MyApp({
   const [page, setPage] = useState(1);
 
   useEffect(() => {
+    if (router.pathname === "/favourites") {
+      setMovies(favouriteMovies);
+    } else {
+      setMovies(allTrendingMovies);
+    }
     setGenres(allGenres);
-    setMovies(allTrendingMovies);
 
     // window.addEventListener("scroll", getMoreMovies);
     // return () => window.removeEventListener("scroll", getMoreMovies);
-  }, []);
+  }, [router.pathname]);
 
   // ------------------------ Genre Filter & Sort By ------------------------ //
 
@@ -231,6 +235,8 @@ export default function MyApp({
           JSON.stringify(updatedFavMovies)
         );
       } else {
+        router.pathname === "/favourites" &&
+          setMovies(deletedMovieFromFavMovies);
         localStorage.setItem(
           "favouriteMovies",
           JSON.stringify(deletedMovieFromFavMovies)
