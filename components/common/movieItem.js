@@ -3,12 +3,13 @@ import AppContext from "../../context/appContext";
 import styled from "styled-components";
 import ImageLoader from "./imageLoader";
 import Link from "next/link";
+import { isArrayEmpty } from "./utils/isEmpty";
 import { LoadingSpinner } from "./loadingSpinner";
 import Router from "next/router";
 import { motion } from "framer-motion";
 import ReactStars from "react-rating-stars-component";
 
-const MovieItem = ({ movie, status }) => {
+const MovieItem = ({ movie, status, favouriteMovies }) => {
   const { handleSelectedMovie, handleFavouriteSelected } = useContext(
     AppContext
   );
@@ -19,6 +20,21 @@ const MovieItem = ({ movie, status }) => {
   const loadingSpinnerRef = useRef(null);
 
   const handleImageLoad = () => setImageLoaded(true);
+
+  useEffect(() => {
+    if (isArrayEmpty(favouriteMovies)) {
+      const favouriteMovie = favouriteMovies.find(
+        (favMovie) => favMovie.id === movie.id
+      );
+      if (favouriteMovie) {
+        setMovieInFavourites(true);
+      } else {
+        setMovieInFavourites(false);
+      }
+    } else {
+      setMovieInFavourites(false);
+    }
+  }, [favouriteMovies]);
 
   useEffect(() => {
     status === "pending" && setImageLoaded(false);
