@@ -29,7 +29,7 @@ export default function MyApp({
     []
   );
 
-  const [favouriteMovies] = useState(() => {
+  const [favouriteMovies, setFavouriteMovies] = useState(() => {
     const lsFavouriteMovies =
       typeof window !== "undefined"
         ? window.localStorage.getItem("favouriteMovies")
@@ -230,6 +230,7 @@ export default function MyApp({
       });
       if (favMovies.length === deletedMovieFromFavMovies.length) {
         const updatedFavMovies = [...favMovies, favMovie];
+        setFavouriteMovies(updatedFavMovies);
         localStorage.setItem(
           "favouriteMovies",
           JSON.stringify(updatedFavMovies)
@@ -237,12 +238,14 @@ export default function MyApp({
       } else {
         router.pathname === "/favourites" &&
           setMovies(deletedMovieFromFavMovies);
+        setFavouriteMovies(deletedMovieFromFavMovies);
         localStorage.setItem(
           "favouriteMovies",
           JSON.stringify(deletedMovieFromFavMovies)
         );
       }
     } else {
+      setFavouriteMovies([favMovie]);
       localStorage.setItem("favouriteMovies", JSON.stringify([favMovie]));
     }
   };
@@ -334,6 +337,7 @@ export default function MyApp({
         status,
         handleGetMoreMovies,
         noSearchResult,
+        favouriteMovies,
       }}
     >
       <Container ref={ref}>
