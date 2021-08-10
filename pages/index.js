@@ -9,9 +9,13 @@ const Title = styled.h1`
 `;
 
 export default function Home() {
-  const { movies, status, handleGetMoreMovies, noSearchResult } = useContext(
-    AppContext
-  );
+  const {
+    movies,
+    status,
+    handleGetMoreMovies,
+    noSearchResult,
+    favouriteMovies,
+  } = useContext(AppContext);
   return (
     <Container>
       <Movies
@@ -19,6 +23,7 @@ export default function Home() {
         status={status}
         noSearchResult={noSearchResult}
         handleGetMoreMovies={handleGetMoreMovies}
+        favouriteMovies={favouriteMovies}
       />
     </Container>
   );

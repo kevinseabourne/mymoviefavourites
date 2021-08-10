@@ -5,12 +5,12 @@ import Movies from "../components/common/movies";
 import styled from "styled-components";
 
 const Favourites = () => {
-  const { movies, status } = useContext(AppContext);
+  const { movies, status, favouriteMovies } = useContext(AppContext);
 
   return (
     <Container>
       {isArrayEmpty(movies) ? (
-        <Movies movies={movies} />
+        <Movies movies={movies} favouriteMovies={favouriteMovies} />
       ) : (
         <TitleContainer>
           <Title>No Favourite Movies...</Title>

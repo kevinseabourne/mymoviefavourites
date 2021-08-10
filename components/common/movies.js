@@ -7,7 +7,13 @@ import { LoadingSpinner } from "./loadingSpinner";
 import { useInView } from "react-intersection-observer";
 import "intersection-observer";
 
-const Movies = ({ movies, status, handleGetMoreMovies, noSearchResult }) => {
+const Movies = ({
+  movies,
+  status,
+  handleGetMoreMovies,
+  noSearchResult,
+  favouriteMovies,
+}) => {
   // const ref = useRef(null);
   const loadingSpinnerRef = useRef(null);
   const [page, setPage] = useState(1);
@@ -76,7 +82,12 @@ const Movies = ({ movies, status, handleGetMoreMovies, noSearchResult }) => {
         animate="show"
       >
         {movies.map((movie, index) => (
-          <MovieItem movie={movie} key={index} status={status} />
+          <MovieItem
+            movie={movie}
+            key={index}
+            status={status}
+            favouriteMovies={favouriteMovies}
+          />
         ))}
         <AnimatePresence>
           {status === "pending" && (
