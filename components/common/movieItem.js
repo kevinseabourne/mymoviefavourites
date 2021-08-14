@@ -5,11 +5,12 @@ import ImageLoader from "./imageLoader";
 import Link from "next/link";
 import { isArrayEmpty } from "./utils/isEmpty";
 import { LoadingSpinner } from "./loadingSpinner";
-import Router from "next/router";
+import { useRouter } from "next/router";
 import { motion } from "framer-motion";
 import ReactStars from "react-rating-stars-component";
 
 const MovieItem = ({ movie, status, favouriteMovies }) => {
+  const router = useRouter();
   const { handleSelectedMovie, handleFavouriteSelected } = useContext(
     AppContext
   );
@@ -34,7 +35,7 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
     } else {
       setMovieInFavourites(false);
     }
-  }, [favouriteMovies]);
+  }, [favouriteMovies, movie]);
 
   useEffect(() => {
     status === "pending" && setImageLoaded(false);
@@ -42,8 +43,9 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
 
   const handleItemClick = (movie) => {
     handleSelectedMovie(movie);
-    Router.push(
-      "/[id]",
+
+    router.push(
+      router.pathname === "/favourites" ? "favourites/[id]" : "/[id]",
       movie.title.toLowerCase().replace(/[{L}!#$'"@`#*+)(:;{}\s]/g, "-")
     );
   };
@@ -74,6 +76,7 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
       },
     },
     hover: {
+      cursor: "pointer",
       backgroundColor: "rgba(18, 18, 18, 0.7)",
       border: "3.4px solid #2d72d9",
       transition: {
@@ -129,13 +132,18 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
   return (
     <Container variants={itemAnimation}>
       <ImageContainer
+        tabIndex="0"
+        // role="button"
+        onKeyPress={() => {
+          handleItemClick(movie);
+        }}
         ref={imageContainerRef}
         onClick={() => handleItemClick(movie)}
         variants={placeholderAnimation}
         whileHover={imageLoaded ? "hover" : "hidden"}
         initial="hidden"
         animate={imageLoaded && focus ? "hover" : "hidden"}
-        onFocus={() => setFocus(true)}
+        onFocus={(e) => e.keycode === 13 && setFocus(true)}
         onBlur={(e) =>
           e.currentTarget.contains(e.relatedTarget)
             ? setFocus(true)
@@ -145,11 +153,11 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
         {imageLoaded && <BackgroundFade variants={hoverInfoAnimation} />}
         {imageLoaded && (
           <FavouriteButton
-            tabIndex="0"
             onClick={(e) => {
               e.stopPropagation();
               handleFavouriteClick(movie);
             }}
+            onKeyPress={(e) => e.stopPropagation()}
             variants={favButtonAnimation}
           >
             <HeartFilter movieInFavourites={movieInFavourites}>
@@ -246,7 +254,7 @@ const HeartFilter = styled(motion.div)`
       : "invert(93%) sepia(6%) saturate(90%) hue-rotate(169deg) brightness(88%) contrast(83%);"};
 `;
 
-const FavouriteButton = styled(motion.div)`
+const FavouriteButton = styled(motion.button)`
   position: absolute;
   top: 0;
   z-index: 20;

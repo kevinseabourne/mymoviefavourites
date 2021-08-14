@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/router";
 import styled from "styled-components";
 import { motion, AnimatePresence, AnimateSharedLayout } from "framer-motion";
 import { isArrayEmpty } from "./utils/isEmpty";
@@ -10,47 +11,25 @@ import "intersection-observer";
 const Movies = ({
   movies,
   status,
-  handleGetMoreMovies,
   noSearchResult,
+  searching,
   favouriteMovies,
+  incrementPage,
 }) => {
-  // const ref = useRef(null);
+  const router = useRouter();
   const loadingSpinnerRef = useRef(null);
-  const [page, setPage] = useState(1);
+  const [animationComplete, setAnimationComplete] = useState(false);
 
   const { ref, inView } = useInView({
-    rootMargin: "0px 0px",
-    // triggerOnce: true,
+    rootMargin: "500px 0px",
   });
 
   useEffect(() => {
-    window.addEventListener("scroll", getMoreMovies);
-    return () => window.removeEventListener("scroll", getMoreMovies);
-  }, []);
-
-  // useEffect(() => {
-  //   async function fetchData() {
-  //     console.log(page);
-  //     await handleGetMoreMovies(page + 1);
-  //     setPage(page + 1);
-  //   }
-  //
-  //   if (inView && isArrayEmpty(movies)) {
-  //     fetchData();
-  //   }
-  // }, [inView]);
-
-  const getMoreMovies = async () => {
-    // console.log(
-    //   window.scrollY + window.innerHeight,
-    //   ref.current.offsetHeight + 104
-    // );
-    // if (window.scrollY + window.innerHeight < ref.current.offsetHeight + 104) {
-    //   // console.log("you're at the bottom of the page");
-    //   // console.log(page + 1);
-    //   setPage(page + 1);
-    // }
-  };
+    // infinite Scroll
+    if (inView && status !== "pending") {
+      incrementPage();
+    }
+  }, [inView]);
 
   const moviesAnimation = {
     hidden: {
@@ -74,12 +53,16 @@ const Movies = ({
     },
   };
 
-  return isArrayEmpty(movies) && status !== "pending" ? (
-    <Container onClick={() => setPage(page + 1)}>
+  const infiniteScrollCondition =
+    animationComplete && !searching && router.pathname !== "/favourites";
+
+  return isArrayEmpty(movies) ? (
+    <Container>
       <MoviesContainer
         variants={moviesAnimation}
         initial="hidden"
         animate="show"
+        onAnimationComplete={() => setAnimationComplete(true)}
       >
         {movies.map((movie, index) => (
           <MovieItem
@@ -90,9 +73,13 @@ const Movies = ({
           />
         ))}
         <AnimatePresence>
-          {status === "pending" && (
-            <LoadingItem ref={ref} variants={loadingItemAnimation}>
-              <LoadingSpinner ref={loadingSpinnerRef} />
+          {infiniteScrollCondition && (
+            <LoadingItem
+              ref={ref}
+              variants={loadingItemAnimation}
+              animate={inView ? "show" : "hidden"}
+            >
+              {inView && <LoadingSpinner ref={loadingSpinnerRef} />}
             </LoadingItem>
           )}
         </AnimatePresence>
