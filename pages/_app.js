@@ -53,10 +53,14 @@ export default function MyApp({
       setMovies(allTrendingMovies);
     }
     setGenres(allGenres);
-
-    // window.addEventListener("scroll", getMoreMovies);
-    // return () => window.removeEventListener("scroll", getMoreMovies);
   }, [router.pathname]);
+
+  useEffect(() => {
+    if (page > 1) {
+      console.log(page);
+      handleGetMovies(selectedGenre, selectedSortBy, true);
+    }
+  }, [page]);
 
   // ------------------------ Genre Filter & Sort By ------------------------ //
 
@@ -90,7 +94,11 @@ export default function MyApp({
     return sortBy;
   };
 
-  const handleGetMovies = async (newSelectedGenre, newSelectedSortBy) => {
+  const handleGetMovies = async (
+    newSelectedGenre,
+    newSelectedSortBy,
+    infiniteScroll
+  ) => {
     setStatus("pending");
     let response = [];
     if (
@@ -115,8 +123,12 @@ export default function MyApp({
       response = await getMovies(page, genreId, sortByQuery);
     }
     if (response) {
-      setMovies([]);
-      setMovies(response);
+      if (infiniteScroll) {
+        setMovies([...movies, ...response]);
+      } else {
+        setMovies([]);
+        setMovies(response);
+      }
       setStatus("resolved");
     }
   };
@@ -327,6 +339,11 @@ export default function MyApp({
     }
   };
 
+  const incrementPage = () => {
+    setPage((previousState) => previousState + 3);
+    // setPage(page + 1);
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -337,7 +354,9 @@ export default function MyApp({
         status,
         handleGetMoreMovies,
         noSearchResult,
+        searching,
         favouriteMovies,
+        incrementPage,
       }}
     >
       <Container ref={ref}>

@@ -15,6 +15,8 @@ export default function Home() {
     handleGetMoreMovies,
     noSearchResult,
     favouriteMovies,
+    incrementPage,
+    searching,
   } = useContext(AppContext);
   return (
     <Container>
@@ -24,6 +26,8 @@ export default function Home() {
         noSearchResult={noSearchResult}
         handleGetMoreMovies={handleGetMoreMovies}
         favouriteMovies={favouriteMovies}
+        incrementPage={incrementPage}
+        searching={searching}
       />
     </Container>
   );
