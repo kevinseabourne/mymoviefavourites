@@ -115,18 +115,19 @@ export default function MyApp({
     ) {
       response = await getTrendingMovies(page);
     } else {
-      const genreId = handleGenreId(newSelectedGenre);
-      const sortByQuery = handleSortBy(newSelectedSortBy);
-
       // if infinite scroll is true and you are trying to select a different genre or sortBy then reset the page count and infinite scroll
       if (
         (infiniteScroll && newSelectedGenre.name !== selectedGenre.name) ||
         (infiniteScroll && newSelectedSortBy.title !== selectedSortBy.title)
       ) {
+        const genreId = handleGenreId(newSelectedGenre);
+        const sortByQuery = handleSortBy(newSelectedSortBy);
         setPage(1);
-        infiniteScroll(false);
+        setInfiniteScroll(false);
         response = await getMovies(1, genreId, sortByQuery);
       } else {
+        const genreId = handleGenreId(newSelectedGenre);
+        const sortByQuery = handleSortBy(newSelectedSortBy);
         response = await getMovies(page, genreId, sortByQuery);
       }
     }
