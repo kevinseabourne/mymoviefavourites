@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useContext } from "react";
 import Movies from "../components/common/movies";
 import AppContext from "../context/appContext";
 import styled from "styled-components";
@@ -17,6 +17,7 @@ export default function Home() {
     favouriteMovies,
     incrementPage,
     searching,
+    infiniteScroll,
   } = useContext(AppContext);
   return (
     <Container>
@@ -28,6 +29,7 @@ export default function Home() {
         favouriteMovies={favouriteMovies}
         incrementPage={incrementPage}
         searching={searching}
+        infiniteScroll={infiniteScroll}
       />
     </Container>
   );

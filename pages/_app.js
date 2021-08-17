@@ -8,6 +8,7 @@ import { getMovies, getTrendingMovies, textSearchMovies } from "./api/movies";
 import { GlobalStyle } from "../globalStyle";
 import styled, { ThemeProvider } from "styled-components";
 import { isArrayEmpty } from "../components/common/utils/isEmpty";
+import { AnimatePresence } from "framer-motion";
 
 const theme = {
   colors: {
@@ -21,7 +22,7 @@ export default function MyApp({
   allGenres,
   allTrendingMovies,
 }) {
-  const router = useRouter();
+  const { push, pathname } = useRouter();
   const ref = useRef(null);
   const [status, setStatus] = useState("idle");
   const [movies, setMovies] = useState([]);
@@ -44,21 +45,21 @@ export default function MyApp({
   });
   const [searching, setSearching] = useState(false);
   const [noSearchResult, setNoSearchResult] = useState(false);
+  const [infiniteScroll, setInfiniteScroll] = useState(false);
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    if (router.pathname === "/favourites") {
+    if (pathname === "/favourites") {
       setMovies(favouriteMovies);
     } else {
       setMovies(allTrendingMovies);
     }
     setGenres(allGenres);
-  }, [router.pathname]);
+  }, [pathname]);
 
   useEffect(() => {
     if (page > 1) {
-      console.log(page);
-      handleGetMovies(selectedGenre, selectedSortBy, true);
+      handleGetMovies(selectedGenre, selectedSortBy);
     }
   }, [page]);
 
@@ -94,11 +95,7 @@ export default function MyApp({
     return sortBy;
   };
 
-  const handleGetMovies = async (
-    newSelectedGenre,
-    newSelectedSortBy,
-    infiniteScroll
-  ) => {
+  const handleGetMovies = async (newSelectedGenre, newSelectedSortBy) => {
     setStatus("pending");
     let response = [];
     if (
@@ -108,7 +105,7 @@ export default function MyApp({
       setSearching(false);
       setNoSearchResult(false);
 
-      router.pathname !== "/" && router.push("/");
+      pathname !== "/" && push("/");
     }
     // when a genre is selected in search results of favourites then you return to home it is not
     // resetting the genre to all
@@ -120,10 +117,25 @@ export default function MyApp({
     } else {
       const genreId = handleGenreId(newSelectedGenre);
       const sortByQuery = handleSortBy(newSelectedSortBy);
-      response = await getMovies(page, genreId, sortByQuery);
+
+      // if infinite scroll is true and you are trying to select a different genre or sortBy then reset the page count and infinite scroll
+      if (
+        (infiniteScroll && newSelectedGenre.name !== selectedGenre.name) ||
+        (infiniteScroll && newSelectedSortBy.title !== selectedSortBy.title)
+      ) {
+        setPage(1);
+        infiniteScroll(false);
+        response = await getMovies(1, genreId, sortByQuery);
+      } else {
+        response = await getMovies(page, genreId, sortByQuery);
+      }
     }
     if (response) {
-      if (infiniteScroll) {
+      if (
+        infiniteScroll &&
+        newSelectedGenre.name === selectedGenre.name &&
+        newSelectedSortBy.title === selectedSortBy.title
+      ) {
         setMovies([...movies, ...response]);
       } else {
         setMovies([]);
@@ -140,7 +152,7 @@ export default function MyApp({
 
     if (newSelectedGenre.name !== "All") {
       const array =
-        router.pathname === "/favourites"
+        pathname === "/favourites"
           ? favouriteMovies
           : initialSearchResultMovies;
 
@@ -150,16 +162,20 @@ export default function MyApp({
         const answer = genreIdsClone.find((id) => id === newSelectedGenre.id);
         return answer;
       });
+
       // if you filter the movies and there are no movies that match then instead of showing a loading spinner is show a message saying no movies
       isArrayEmpty(filteredMovies)
         ? setNoSearchResult(false)
         : setNoSearchResult(true);
+
       // movies are reset to empty to allow for animation
       setMovies([]);
       setMovies(filteredMovies);
     } else {
       setMovies([]);
-      setMovies(initialSearchResultMovies);
+      setMovies(
+        pathname === "/favourites" ? favouriteMovies : initialSearchResultMovies
+      );
     }
   };
 
@@ -181,7 +197,7 @@ export default function MyApp({
   };
 
   const handleTopRatedFilter = () => {
-    // Sorts the favourite movies and movies from search results based on the movie rating in descending order.
+    // Sorts the movies based on the movie rating in descending order.
     const moviesClone = [...movies];
 
     const filteredMovies = moviesClone
@@ -196,7 +212,7 @@ export default function MyApp({
   };
 
   const handleYearFilter = () => {
-    // Sorts the favourite movies from newest - oldest when you sort by Year
+    // Sorts the movies from newest - oldest when you sort by Year
     const moviesClone = [...movies];
     const filteredMovies = moviesClone
       .sort((a, b) => {
@@ -211,7 +227,7 @@ export default function MyApp({
   };
 
   const handleTitleFilter = () => {
-    // Sorts the favourite movies and movies from search results in alphabetical order from a - z
+    // Sorts the movies in alphabetical order from a - z
     const moviesClone = [...movies];
     const filteredMovies = moviesClone.sort((a, b) => {
       return a.title.localeCompare(b.title);
@@ -232,24 +248,23 @@ export default function MyApp({
     localStorage.setItem("selectedMovie", JSON.stringify(selectedMovie));
   };
 
-  const handleFavouriteSelected = (favMovie) => {
-    const favMovies = localStorage.getItem("favouriteMovies")
-      ? JSON.parse(localStorage.getItem("favouriteMovies"))
-      : [];
-    if (isArrayEmpty(favMovies)) {
-      const deletedMovieFromFavMovies = favMovies.filter((movie) => {
-        return movie.id !== favMovie.id;
-      });
-      if (favMovies.length === deletedMovieFromFavMovies.length) {
-        const updatedFavMovies = [...favMovies, favMovie];
+  const handleFavouriteSelected = (favMovie, favourited) => {
+    if (isArrayEmpty(favouriteMovies)) {
+      if (!favourited && favouriteMovies.length <= 300) {
+        // add - limit of 300 favourited movies
+        const updatedFavMovies = [...favouriteMovies, favMovie];
         setFavouriteMovies(updatedFavMovies);
         localStorage.setItem(
           "favouriteMovies",
           JSON.stringify(updatedFavMovies)
         );
       } else {
-        router.pathname === "/favourites" &&
-          setMovies(deletedMovieFromFavMovies);
+        // delete
+        const deletedMovieFromFavMovies = favouriteMovies.filter((movie) => {
+          return movie.id !== favMovie.id;
+        });
+
+        pathname === "/favourites" && setMovies(deletedMovieFromFavMovies);
         setFavouriteMovies(deletedMovieFromFavMovies);
         localStorage.setItem(
           "favouriteMovies",
@@ -257,6 +272,7 @@ export default function MyApp({
         );
       }
     } else {
+      // first movie added to favourites
       setFavouriteMovies([favMovie]);
       localStorage.setItem("favouriteMovies", JSON.stringify([favMovie]));
     }
@@ -281,9 +297,9 @@ export default function MyApp({
 
   const handleSearch = async (query) => {
     setSearching(true);
-    router.pathname !== "/" && router.push("/");
+    pathname !== "/" && pathname !== "/favourites" && push("/");
     // used to display a message saying 'no movies found' for a search result instead of a loading spinner
-    if (router.pathname === "/favourites") {
+    if (pathname === "/favourites") {
       handleFavouritesSearch(query);
     } else {
       setStatus("pending");
@@ -301,18 +317,26 @@ export default function MyApp({
   };
 
   const handleFavouritesSearch = (query) => {
-    if (localStorage.getItem("favouriteMovies")) {
-      const favMovies = JSON.parse(localStorage.getItem("favouriteMovies"));
-      if (isArrayEmpty(favMovies)) {
-        const cleanQuery = query.toLowerCase().trim();
+    if (isArrayEmpty(favouriteMovies)) {
+      const cleanQuery = query.toLowerCase().trim();
 
-        const searchedFavMovies = favMovies.filter((movie) => {
-          return (
-            movie.toLowerCase().startsWith(cleanQuery) ||
-            movie.toLowerCase().includes(cleanQuery)
-          );
-        });
-        setMovies(searchedFavMovies);
+      const searchedFavMovies = favouriteMovies.filter((movie) => {
+        return (
+          movie.title.toLowerCase().startsWith(cleanQuery) ||
+          movie.title.toLowerCase().includes(cleanQuery)
+        );
+      });
+
+      setMovies(searchedFavMovies);
+    }
+  };
+
+  const clearSearchResults = () => {
+    if (searching) {
+      if (pathname === "/favourites") {
+        setMovies(favouriteMovies);
+      } else if (pathname === "/") {
+        handleGetMovies(selectedGenre, selectedSortBy);
       }
     }
   };
@@ -323,25 +347,10 @@ export default function MyApp({
 
   // ------------------------ Infinite Scroll ------------------------ //
 
-  const handleGetMoreMovies = async (page) => {
-    if (status !== "pending") {
-      console.log("you're at the bottom of the page");
-      setStatus("pending");
-
-      const response = await getTrendingMovies(page);
-
-      if (response) {
-        setMovies([...movies, ...response]);
-        // setPage(page + 1);
-
-        setStatus("resolved");
-      }
-    }
-  };
-
   const incrementPage = () => {
+    // boolean value for infinite scroll to prevent movies from animating out when data is loading
+    !infiniteScroll && setInfiniteScroll(true);
     setPage((previousState) => previousState + 3);
-    // setPage(page + 1);
   };
 
   return (
@@ -352,11 +361,12 @@ export default function MyApp({
         handleSelectedMovie,
         handleFavouriteSelected,
         status,
-        handleGetMoreMovies,
+        infiniteScroll,
         noSearchResult,
         searching,
         favouriteMovies,
         incrementPage,
+        selectedGenre,
       }}
     >
       <Container ref={ref}>
@@ -368,6 +378,7 @@ export default function MyApp({
           handleSelectedSortBy={handleSelectedSortBy}
           searching={searching}
           handleSearching={handleSearching}
+          clearSearchResults={clearSearchResults}
         />
         <CompenentMargin>
           <GlobalStyle />
