@@ -1,80 +1,89 @@
-import React from "react";
+import React, { useEffect } from "react";
 import styled from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import ImageLoader from "./imageLoader";
 import searchIcon from "../../public/icons/search-icon.svg";
 import crossIcon from "../../public/icons/cross.svg";
 
-export const Input = React.forwardRef(
-  ({ inputOpen, handleInputOpen, searchInputValue, onChange }, ref) => {
-    const iconBoxAnimation = {
-      hidden: {
-        opacity: 0,
-        rotate: 45,
-        scale: 0.5,
+const Input = ({
+  name,
+  inputOpen,
+  searchInputValue,
+  onClick,
+  clearInputAndFocus,
+  register,
+}) => {
+  const iconBoxAnimation = {
+    hidden: {
+      opacity: 0,
+      rotate: 45,
+      scale: 0.5,
+    },
+    show: {
+      opacity: 1,
+      rotate: 0,
+      scale: 1,
+      transition: {
+        duration: 0.1,
       },
-      show: {
-        opacity: 1,
-        rotate: 0,
-        scale: 1,
-        transition: {
-          duration: 0.1,
-        },
-      },
-    };
+    },
+  };
 
-    return (
-      <InputContainer>
-        <SearchIconContainer inputOpen={inputOpen} onClick={handleInputOpen}>
-          <ImageLoader
-            src={searchIcon}
-            width="22px"
-            placeholderSize="100%"
-            alt="search"
-            hover={true}
-            priority={true}
-          />
-        </SearchIconContainer>
-        <RealInput
-          placeholder="Search..."
-          name="search"
-          ref={(e) => {
-            ref.current = e;
-          }}
-          onChange={onChange}
-          inputOpen={inputOpen}
+  return (
+    <InputContainer>
+      <SearchIconContainer
+        inputOpen={inputOpen}
+        onClick={onClick}
+        onFocus={onClick}
+        tabIndex="0"
+      >
+        <ImageLoader
+          src={searchIcon}
+          width="22px"
+          placeholderSize="100%"
+          alt="search"
+          hover={true}
+          priority={true}
         />
-        <AnimatePresence>
-          {inputOpen && searchInputValue && searchInputValue.length >= 1 && (
-            <IconBox
-              onClick={() => {
-                ref.current.value = "";
-                ref.current.focus();
-              }}
-              variants={iconBoxAnimation}
-              initial="hidden"
-              animate={
-                searchInputValue && searchInputValue.length >= 1
-                  ? "show"
-                  : "hidden"
-              }
-              exit="hidden"
-            >
-              <ImageLoader
-                src={crossIcon}
-                width="15px"
-                placeholderSize="100%"
-                alt="cross"
-                hover={true}
-                priority={true}
-              />
-            </IconBox>
-          )}
-        </AnimatePresence>
-      </InputContainer>
-    );
-  }
-);
+      </SearchIconContainer>
+      <RealInput
+        placeholder="Search..."
+        {...register(name)}
+        inputOpen={inputOpen}
+        tabIndex={inputOpen ? "0" : "-1"}
+      />
+      <AnimatePresence>
+        {inputOpen && searchInputValue && searchInputValue.length >= 1 && (
+          <IconBox
+            // onClick={(e) => {
+            //   clearInputAndFocus();
+            // }}
+            variants={iconBoxAnimation}
+            initial="hidden"
+            animate={
+              searchInputValue && searchInputValue.length >= 1
+                ? "show"
+                : "hidden"
+            }
+            exit="hidden"
+          >
+            <ImageLoader
+              src={crossIcon}
+              width="15px"
+              placeholderSize="100%"
+              alt="cross"
+              hover={true}
+              priority={true}
+              centerImage={true}
+            />
+          </IconBox>
+        )}
+      </AnimatePresence>
+    </InputContainer>
+  );
+};
+
+export default Input;
 
 const InputContainer = styled.div`
   display: flex;
@@ -82,10 +91,14 @@ const InputContainer = styled.div`
   align-items: center;
   justify-content: center;
   width: 100%;
+  max-width: 300px;
+  position: relative;
 `;
 
 const SearchIconContainer = styled.div`
   display: flex;
+  width: 100%;
+  max-width: 22px;
   align-items: center;
   justify-content: center;
   margin-left: 8px;
@@ -101,6 +114,10 @@ const SearchIconContainer = styled.div`
   }
   &:focus:not(:focus-visible) {
     outline: none;
+  }
+  @media (max-width: 1024px) {
+      margin-left: 0px;
+      width: 22px;
   }
 `;
 
@@ -122,6 +139,9 @@ const RealInput = styled.input`
     inputOpen ? "rgb(12, 12, 12)" : "#17181b"};
   border-radius: 10em;
   transition: all 0.3s;
+  @media (max-width: 1024px) {
+    height: 32px;
+  }
 `;
 
 const IconBox = styled(motion.div)`
@@ -141,5 +161,8 @@ const IconBox = styled(motion.div)`
     contrast(83%);
   &:focus:not(:focus-visible) {
     outline: none;
+  }
+  @media (max-width: 1024px) {
+    width: 40px;
   }
 `;
