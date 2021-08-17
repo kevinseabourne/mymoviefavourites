@@ -4,10 +4,8 @@ import { useState, useEffect, useRef, useContext } from "react";
 import AppContext from "../context/appContext";
 import styled, { keyframes } from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
-// import { Tooltip, OverlayTrigger } from "react-bootstrap";
-// import Fade from "react-reveal/Fade";
 import { useForm } from "react-hook-form";
-import { Input } from "./common/input";
+import Input from "./common/input";
 import ResponsiveHeader from "./responsiveHeader";
 import ImageLoader from "../components/common/imageLoader";
 import carrotIcon from "../public/icons/carret-down-icon.svg";
@@ -16,18 +14,17 @@ import infoIcon from "../public/icons/info-circle-icon.svg";
 
 const Header = ({
   handleGetMovies,
-  handleSelectedGenre,
   handleGenreFilter,
   handleSelectedSortBy,
   handleSearch,
   genres,
   searching,
-  handleSearching,
+  clearSearchResults,
 }) => {
-  const router = useRouter();
+  const { push, pathname } = useRouter();
   const genreDropdownRef = useRef(null);
   const sortByDropdownRef = useRef(null);
-  const searchRef = useRef(null);
+  const timeout = useRef(null);
   const [genreDropdownOpen, setGenreDropdownOpen] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState({
     id: null,
@@ -35,7 +32,7 @@ const Header = ({
   });
   const [sortByDropdownOpen, setSortByDropdownOpen] = useState(false);
   const [selectedSortBy, setSelectedSortBy] = useState(
-    router.pathname === "/favourites"
+    pathname === "/favourites"
       ? { query: "primary_release_date.desc", title: "Year" }
       : {
           query: "",
@@ -50,11 +47,16 @@ const Header = ({
     { query: "title.asc", title: "Title" },
   ]);
   const [inputOpen, setInputOpen] = useState(false);
-  const [dropdownHovering, setDropdownHovering] = useState(false);
   const [renderChangeOnce, setRenderChangeOnce] = useState(false);
 
-  const { register, handleSubmit, watch } = useForm();
-  const { ref, ...rest } = register("search");
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setFocus,
+    reset,
+    setValue,
+  } = useForm();
 
   const searchInputValue = watch("search");
 
@@ -66,7 +68,7 @@ const Header = ({
   }, []);
 
   useEffect(() => {
-    if (router.pathname === "/favourites") {
+    if (pathname === "/favourites") {
       !renderChangeOnce &&
         setSelectedSortBy({
           query: "primary_release_date.desc",
@@ -79,13 +81,36 @@ const Header = ({
     }
   });
 
-  useEffect(() => {}, [selectedSortBy]);
+  // useEffect(() => {
+  //   if (!inputOpen) {
+  //     setValue("search", "");
+  //
+  //     if (searching) {
+  //       // using timeout here to allow the input animation to finish prevent lag
+  //       timeout.current = setTimeout(() => clearSearchResults(), 300);
+  //     }
+  //   }
+  //   return () => clearTimeout(timeout);
+  // }, [inputOpen]);
 
-  useEffect(() => {
-    if (!inputOpen) {
-      searchRef.current.value = "";
+  // ------------------------ dropdown menu's ------------------------ //
+
+  const handleSortByClick = (option) => {
+    if (pathname !== "/" && pathname !== "/favourites") {
+      push("/");
     }
-  }, [inputOpen]);
+    setSelectedSortBy(option);
+
+    if (searching || pathname === "/favourites") {
+      if (option.title === "Trending" || option.title === "Popular") {
+        closeAndClearInput();
+        handleGetMovies(false, option);
+      }
+      handleSelectedSortBy(option);
+    } else {
+      handleGetMovies(false, option);
+    }
+  };
 
   const handleClickOutside = (e) => {
     if (
@@ -102,6 +127,8 @@ const Header = ({
     }
   };
 
+  // ------------------------ Form ------------------------ //
+
   const onSubmit = (query) => {
     const { search } = query;
 
@@ -116,9 +143,18 @@ const Header = ({
 
   const handleInputOpen = () => {
     if (!inputOpen) {
-      searchRef.current.focus();
+      setInputOpen(true);
+      setFocus("search");
     }
-    setInputOpen(!inputOpen);
+    if (inputOpen) {
+      setValue("search", "");
+      setInputOpen(false);
+    }
+  };
+
+  const clearInputAndFocus = () => {
+    setValue("search", "");
+    setFocus("search");
   };
 
   const handleGenreDropdown = () => {
@@ -128,6 +164,13 @@ const Header = ({
   const handleSortByDropdown = () => {
     setSortByDropdownOpen(!sortByDropdownOpen);
   };
+
+  const closeAndClearInput = () => {
+    setInputOpen(false);
+    setValue("search", "");
+  };
+
+  // ------------------------ Return to homepage ------------------------ //
 
   const handleReturnHomeAndRest = () => {
     // also if searching is true then do
@@ -149,53 +192,15 @@ const Header = ({
       { query: null, title: "All" },
       { query: "", title: "Trending" }
     );
-    router.push("/");
+    push("/");
   };
 
-  const closeAndClearInput = () => {
-    setInputOpen(false);
-    searchRef.current.value = "";
-  };
-
-  const handleSortByClick = (option) => {
-    if (router.pathname !== "/" && router.pathname !== "/favourites") {
-      router.push("/");
-    }
-    setSelectedSortBy(option);
-
-    if (searching) {
-      if (option.title === "Trending" || option.title === "Popular") {
-        closeAndClearInput();
-        handleGetMovies(false, option);
-      }
-      handleSelectedSortBy(option);
-    } else {
-      handleGetMovies(false, option);
-    }
-  };
+  // ------------------------ favourite & About Links ------------------------ //
 
   const handleRouteChange = (route) => {
-    router.push(route);
+    push(route);
     closeAndClearInput();
   };
-
-  const handleIconBoxKeyDown = (e) => {
-    const key = e.key === 13 || e.keyCode === 13;
-    if (key) {
-      searchRef.current.value = "";
-      searchRef.current.focus();
-    }
-  };
-  // const {
-  // onGenreSelect,
-  // onSortBySelection,
-  // handleFavouritesPageSelection,
-  // allFavMovies,
-  // FavouritesSectionOpen,
-  // onChange,
-  // } = props;
-
-  const favouritesSectionOpen = false;
 
   return (
     <Container>
@@ -204,86 +209,78 @@ const Header = ({
           Movies
         </MoviesLabel>
 
-        {favouritesSectionOpen ? (
-          <FavouritesCounter>{allFavMovies.length}</FavouritesCounter>
-        ) : (
-          <GenreContainer
-            ref={genreDropdownRef}
-            onClick={handleGenreDropdown}
-            onFocus={handleGenreDropdown}
-            onBlur={handleGenreDropdown}
-          >
-            <DropdownTitle>Genre</DropdownTitle>
-            <SelectedDropdownValue>{selectedGenre.name}</SelectedDropdownValue>
-            <CarrotIconContainer>
-              <ImageLoader
-                src={carrotIcon}
-                width="10px"
-                placeholderSize="56.85%"
-                alt="carrot"
-                hover={true}
-                priority={true}
-              />
-            </CarrotIconContainer>
-            {genreDropdownOpen && (
-              <Dropdown>
-                {genres.map((genre) => (
-                  <DropdownItem
-                    key={genre.id}
-                    onClick={() => {
-                      setSelectedGenre(genre);
+        <GenreContainer
+          ref={genreDropdownRef}
+          onClick={handleGenreDropdown}
+          onFocus={handleGenreDropdown}
+          onBlur={handleGenreDropdown}
+        >
+          <DropdownTitle>Genre</DropdownTitle>
+          <SelectedDropdownValue>{selectedGenre.name}</SelectedDropdownValue>
+          <CarrotIconContainer>
+            <ImageLoader
+              src={carrotIcon}
+              width="10px"
+              placeholderSize="56.85%"
+              alt="carrot"
+              hover={true}
+              priority={true}
+            />
+          </CarrotIconContainer>
+          {genreDropdownOpen && (
+            <Dropdown>
+              {genres.map((genre) => (
+                <DropdownItem
+                  key={genre.id}
+                  onClick={() => {
+                    setSelectedGenre(genre);
 
-                      searching
-                        ? handleGenreFilter(genre)
-                        : handleGetMovies(genre, false);
-                    }}
-                    disabled={genre.name === selectedGenre.name}
-                  >
-                    {genre.name}
-                  </DropdownItem>
-                ))}
-              </Dropdown>
-            )}
-          </GenreContainer>
-        )}
+                    searching || pathname === "/favourites"
+                      ? handleGenreFilter(genre)
+                      : handleGetMovies(genre, false);
+                  }}
+                  disabled={genre.name === selectedGenre.name}
+                >
+                  {genre.name}
+                </DropdownItem>
+              ))}
+            </Dropdown>
+          )}
+        </GenreContainer>
 
-        {!favouritesSectionOpen && (
-          <SortByContainer
-            ref={sortByDropdownRef}
-            onClick={handleSortByDropdown}
-            onFocus={handleSortByDropdown}
-            onBlur={handleSortByDropdown}
-          >
-            <DropdownTitle>Sort By</DropdownTitle>
-            <SelectedDropdownValue>
-              {selectedSortBy.title}
-            </SelectedDropdownValue>
-            <CarrotIconContainer>
-              <ImageLoader
-                src={carrotIcon}
-                width="10px"
-                placeholderSize="56.85%"
-                alt="carrot"
-                hover={true}
-                priority={true}
-              />
-            </CarrotIconContainer>
+        <SortByContainer
+          ref={sortByDropdownRef}
+          onClick={handleSortByDropdown}
+          onFocus={handleSortByDropdown}
+          onBlur={handleSortByDropdown}
+        >
+          <DropdownTitle>Sort By</DropdownTitle>
+          <SelectedDropdownValue>{selectedSortBy.title}</SelectedDropdownValue>
+          <CarrotIconContainer>
+            <ImageLoader
+              src={carrotIcon}
+              width="10px"
+              placeholderSize="56.85%"
+              alt="carrot"
+              hover={true}
+              priority={true}
+            />
+          </CarrotIconContainer>
 
-            {sortByDropdownOpen && (
-              <Dropdown>
-                {sortByOptions.map((option) => (
-                  <DropdownItem
-                    key={sortByOptions.indexOf(option)}
-                    onClick={() => handleSortByClick(option)}
-                    disabled={option.title === selectedSortBy.title}
-                  >
-                    {option.title}
-                  </DropdownItem>
-                ))}
-              </Dropdown>
-            )}
-          </SortByContainer>
-        )}
+          {sortByDropdownOpen && (
+            <Dropdown>
+              {sortByOptions.map((option) => (
+                <DropdownItem
+                  key={sortByOptions.indexOf(option)}
+                  onClick={() => handleSortByClick(option)}
+                  disabled={option.title === selectedSortBy.title}
+                >
+                  {option.title}
+                </DropdownItem>
+              ))}
+            </Dropdown>
+          )}
+        </SortByContainer>
       </FilterSection>
 
       <WebsiteTitleContainer onClick={handleReturnHomeAndRest}>
@@ -291,7 +288,7 @@ const Header = ({
         <PopcornContainer>
           <ImageLoader
             src={"https://chpistel.sirv.com/Images/popcorn-icon.png?w=60"}
-            width="36px"
+            width="100%"
             placeholderSize="100%"
             alt="popcorn"
             hover={true}
@@ -301,20 +298,16 @@ const Header = ({
       </WebsiteTitleContainer>
 
       <IconSection>
-        <InputContainer
-          onSubmit={handleSubmit(onSubmit)}
-          inputOpen={inputOpen}
-          onFocus={() => setInputOpen(true)}
-        >
+        <Form onSubmit={handleSubmit(onSubmit)} inputOpen={inputOpen}>
           <Input
-            ref={searchRef}
+            name="search"
             inputOpen={inputOpen}
             onClick={handleInputOpen}
             searchInputValue={searchInputValue}
-            {...rest}
-            handleInputOpen={handleInputOpen}
+            register={register}
+            clearInputAndFocus={clearInputAndFocus}
           />
-        </InputContainer>
+        </Form>
 
         <HeartIconContainer onClick={() => handleRouteChange("/favourites")}>
           <ImageLoader
@@ -339,7 +332,19 @@ const Header = ({
           />
         </AboutIconContainer>
       </IconSection>
-      <ResponsiveHeader />
+      <ResponsiveHeader
+        handleInputOpen={handleInputOpen}
+        searchInputValue={searchInputValue}
+        inputOpen={inputOpen}
+        register={register}
+        setFocus={setFocus}
+        reset={reset}
+        closeAndClearInput={closeAndClearInput}
+        clearInputAndFocus={clearInputAndFocus}
+        handleRouteChange={handleRouteChange}
+        handleSubmit={handleSubmit}
+        onSubmit={onSubmit}
+      />
     </Container>
   );
 };
@@ -408,14 +413,6 @@ const DropdownTitle = styled.div`
   user-select: none;
 `;
 
-const FavouritesCounter = styled.span`
-  color: #2d72d9;
-  padding-left: 16px;
-  padding-right: 5px;
-  font-weight: 500;
-  user-select: none;
-`;
-
 const SelectedDropdownValue = styled.span`
   color: #2d72d9;
   padding-left: 9px;
@@ -449,9 +446,6 @@ const GenreContainer = styled.div`
       color: white;
     }
     ${SelectedDropdownValue} {
-    }
-    ${FavouritesCounter} {
-      cursor: default;
     }
     ${CarrotIconContainer} {
       filter: invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg)
@@ -492,7 +486,7 @@ const Dropdown = styled.div`
   top: 18px;
   box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px,
     rgba(0, 0, 0, 0.22) 0px 10px 10px;
-  z-index: 1;
+  z-index: 10;
 `;
 
 const DropdownItem = styled.div`
@@ -533,7 +527,12 @@ const shake = keyframes`
   }
 `;
 
-const PopcornContainer = styled.div``;
+const PopcornContainer = styled.div`
+  width: 36px;
+  @media (max-width: 632px) {
+    width: 32px;
+  }
+`;
 
 const WebsiteTitleContainer = styled.div`
   width: 153px;
@@ -556,7 +555,8 @@ const WebsiteTitleContainer = styled.div`
     }
   }
   @media (max-width: 632px) {
-    top: 18px;
+    top: 20px;
+    margin-left: 40px;
   }
 `;
 
@@ -569,6 +569,9 @@ const WebsiteTitle = styled.h1`
   user-select: none;
   &:hover {
     cursor: pointer;
+  }
+  @media (max-width: 632px) {
+    font-size: 30px;
   }
 `;
 
@@ -586,7 +589,7 @@ const IconSection = styled.div`
   }
 `;
 
-const InputContainer = styled.form`
+const Form = styled.form`
   display: flex;
   position: relative;
   justify-content: center;
@@ -607,8 +610,7 @@ const HeartIconContainer = styled.button`
   &:focus:not(:focus-visible) {
     outline: none;
   }
-  &:hover,
-  &:focus {
+  &:hover {
     filter: invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg)
       brightness(102%) contrast(105%);
   }
@@ -621,8 +623,7 @@ const AboutIconContainer = styled.button`
   &:focus:not(:focus-visible) {
     outline: none;
   }
-  &:hover,
-  &:focus {
+  &:hover {
     filter: invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg)
       brightness(102%) contrast(105%);
   }
