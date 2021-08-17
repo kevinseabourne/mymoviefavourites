@@ -1,135 +1,253 @@
-import React, { useRef, useState, useEffect } from "react";
-import Link from "next/link";
+import { useRef, useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useForm } from "react-hook-form";
+import Input from "./common/input";
 import styled, { createGlobalStyle } from "styled-components";
 import ImageLoader from "../components/common/imageLoader";
-import { useForm } from "react-hook-form";
-import searchIcon from "../public/icons/search-icon.svg";
 import heartIcon from "../public/icons/heart_icon.svg";
 import infoIcon from "../public/icons/info-circle-icon.svg";
 
-const ResponsiveHeader = (props) => {
-  const ref = useRef(null);
-  const [burgerMenu, setBurgerMenu] = useState(false);
+const ResponsiveHeader = ({ handleRouteChange, onSubmit }) => {
+  const menuRef = useRef(null);
+  const burgerRef = useRef(null);
+  const timeout = useRef(null);
+
   const [inputOpen, setInputOpen] = useState(false);
-  const { register, handleSubmit } = useForm();
+  const [burgerOpen, setBurgerOpen] = useState(false);
 
   useEffect(() => {
     window.addEventListener("mousedown", handleClickOutside);
     return () => {
+      clearTimeout(timeout);
       window.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
+  const { register, handleSubmit, watch, setFocus, setValue } = useForm();
+
+  const burgerSearchInputValue = watch("burgerSearch");
+
   const handleClickOutside = (e) => {
-    if (ref.current && !ref.current.contains(e.target)) {
-      setBurgerMenu(false);
+    if (e.target !== burgerRef.current && !e.target === menuRef.current) {
+      setBurgerOpen(false);
+      inputOpen && closeAndClearBurgerInput();
     }
   };
 
-  const onSubmit = () => {};
+  // ------------------------ Form ------------------------ //
+
+  const closeHeaderAndSubmit = (query) => {
+    const { burgerSearch } = query;
+    if (burgerSearch) {
+      closeAndClearBurgerInput();
+      setBurgerOpen(false);
+
+      // allow closing animation to finish to avoid lag
+      const search = { search: burgerSearch };
+      timeout.current = setTimeout(() => onSubmit(search), 900);
+    }
+  };
 
   const handleBurgerClick = () => {
-    setBurgerMenu(!burgerMenu);
+    inputOpen && closeAndClearBurgerInput();
+
+    const time = inputOpen ? 400 : 0;
+    timeout.current = setTimeout(() => {
+      setBurgerOpen(!burgerOpen);
+    }, time);
   };
 
   const handleInputOpen = () => {
-    setInputOpen(!inputOpen);
+    // tried to use !input with state update bug did not work
+    if (!inputOpen) {
+      setInputOpen(true);
+      setFocus("burgerSearch");
+    }
+    if (inputOpen) {
+      setValue("burgerSearch", "");
+      setInputOpen(false);
+    }
   };
 
-  const { handleFavouritesPageSelection } = props;
+  const closeAndClearBurgerInput = () => {
+    setInputOpen(false);
+    setValue("burgerSearch", "");
+  };
+
+  const clearInputAndFocus = () => {
+    setValue("burgerSearch", "");
+    setFocus("burgerSearch");
+  };
+
+  const handleRouteChangeWithOpenInput = (route) => {
+    closeAndClearBurgerInput();
+
+    // if the input is open delay the page change to allow the animation to finish
+    const time = inputOpen ? 400 : 0;
+    timeout.current = setTimeout(() => {
+      handleBurgerClick();
+      handleRouteChange(route);
+    }, time);
+  };
+
+  const dropDownAnimation = {
+    hidden: {
+      opacity: 0,
+      transition: {
+        staggerDirection: -1,
+
+        staggerChildren: 0.3,
+
+        delay: 1.18,
+      },
+    },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerDirection: 1,
+        staggerChildren: 0.05,
+      },
+    },
+  };
+
+  const buttonsAnimation = {
+    hidden: {
+      opacity: 0,
+      scale: 0,
+    },
+    show: {
+      opacity: 1,
+      scale: 1,
+    },
+  };
 
   return (
     <Container>
-      <GlobalStyle burgerMenu={burgerMenu} />
-      <BurgerMenu
-        value={burgerMenu}
-        onClick={handleBurgerClick}
-        id="burgerMenu"
-        data-testid="burgerMenu"
-      >
-        <BurgerInner burgerMenu={burgerMenu} />
-      </BurgerMenu>
-      {burgerMenu && (
-        <Dropdown burgerMenu={burgerMenu} ref={ref}>
-          <InputContainer
-            onClick={handleInputOpen}
-            onSubmit={handleSubmit(onSubmit)}
-            inputOpen={inputOpen}
+      <GlobalStyle burgerOpen={burgerOpen} />
+      <BurgerContainer onClick={handleBurgerClick}>
+        <Burger ref={burgerRef} value={burgerOpen} id="burgerOpen">
+          <BurgerInner burgerOpen={burgerOpen} />
+        </Burger>
+      </BurgerContainer>
+      <AnimatePresence>
+        {burgerOpen && (
+          <Dropdown
+            burgerOpen={burgerOpen}
+            ref={menuRef}
+            variants={dropDownAnimation}
+            initial="hidden"
+            animate={burgerOpen ? "show" : "hidden"}
+            exit="hidden"
           >
-            <ImageLoader
-              src={searchIcon}
-              width="22px"
-              placeholderSize="70%"
-              alt="searchIcon-icon"
-            />
-            <Input
-              name="SearchInput"
-              label="Search..."
-              // ref={register}
-              inputOpen={inputOpen}
-            />
-          </InputContainer>
-          <Link href="/favourites">
-            <ImageLoader
-              src={heartIcon}
-              width="27px"
-              placeholderSize="70%"
-              alt="heart-icon"
-              onClick={() => handleFavouritesPageSelection()}
-            />
-          </Link>
-          <Link href="/about">
-            <ImageLoader
-              src={infoIcon}
-              width="27px"
-              placeholderSize="70%"
-              alt="heart-icon"
-            />
-          </Link>
-        </Dropdown>
-      )}
+            <Form
+              variants={buttonsAnimation}
+              onSubmit={handleSubmit(closeHeaderAndSubmit)}
+            >
+              <Input
+                name="burgerSearch"
+                inputOpen={inputOpen}
+                onClick={handleInputOpen}
+                searchInputValue={burgerSearchInputValue}
+                register={register}
+                clearInputAndFocus={clearInputAndFocus}
+              />
+            </Form>
+
+            <HeartIconContainer
+              variants={buttonsAnimation}
+              onClick={() => handleRouteChangeWithOpenInput("/favourites")}
+            >
+              <ImageLoader
+                src={heartIcon}
+                width="24px"
+                placeholderSize="100%"
+                alt="heart"
+                hover={true}
+                priority={true}
+              />
+            </HeartIconContainer>
+
+            <AboutIconContainer
+              onClick={() => handleRouteChangeWithOpenInput("/about")}
+              variants={buttonsAnimation}
+            >
+              <ImageLoader
+                src={infoIcon}
+                width="22px"
+                placeholderSize="100%"
+                alt="about"
+                svgStartColor="invert(89%) sepia(7%) saturate(74%) hue-rotate(164deg) brightness(90%) contrast(87%);"
+                hover={true}
+                priority={true}
+              />
+            </AboutIconContainer>
+          </Dropdown>
+        )}
+      </AnimatePresence>
     </Container>
   );
 };
 
 export default ResponsiveHeader;
 
-const Container = styled.div`
+const GlobalStyle = createGlobalStyle`
+ body {
+   overflow: ${({ burgerOpen }) =>
+     burgerOpen ? "hidden !important" : "scroll"};
+   overscroll-behavior: none;
+  }
+`;
+
+const Container = styled(motion.div)`
   display: none;
   @media (max-width: 1024px) {
     display: flex;
   }
 `;
 
-const BurgerMenu = styled.div`
+const BurgerContainer = styled.button`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  padding-top: 17px;
+  padding-bottom: 37px;
+  padding-left: 27px;
+  padding-right: 34px;
+  position: absolute;
+  bottom: 18px;
+  right: 30px;
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+  @media (max-width: 632px) {
+    bottom: 9px;
+  }
+`;
+
+const Burger = styled.div`
   display: inline-block;
   position: absolute;
-  bottom: 15px;
-  right: 20px;
   width: 20px;
   height: 0px;
-  padding: 40px;
   margin-left: auto;
   z-index: 6;
   &:hover {
     cursor: pointer;
   }
-  @media (max-width: 632px) {
-    bottom: 8px;
-  }
 `;
 
 const BurgerInner = styled.div`
   position: absolute;
-  width: 33px;
+  width: 30px;
   height: 3px;
   transition-timing-function: ease;
   transition-duration: 0.15s;
   transition-property: transform;
-  border-radius: 4px;
+    border-radius: 12px;
   background-color: #f5f5eb;
-  transform: ${({ burgerMenu }) =>
-    burgerMenu
+  transform: ${({ burgerOpen }) =>
+    burgerOpen
       ? `translate3d(0, 10px, 0) rotate(45deg)`
       : `translate3d(0, 0px, 0) rotate(0deg)`}
   };
@@ -141,85 +259,86 @@ const BurgerInner = styled.div`
     transition-duration: 0.15s;
     transition-property: transform, opacity;
     position: absolute;
-    width: 33px;
+    width: 30px;
     height: 3px;
     transition-timing-function: ease;
     transition-duration: 0.15s;
     transition-property: transform;
-    border-radius: 4px;
+      border-radius: 12px;
     background-color: #f5f5eb;
-        opacity: ${({ burgerMenu }) => (burgerMenu ? 0 : 1)}
+        opacity: ${({ burgerOpen }) => (burgerOpen ? 0 : 1)}
   };
   &::after {
     top: 18px;
     display: block;
     content: "";
     position: absolute;
-    width: 33px;
+    width: 30px;
     height: 3px;
     transition-timing-function: ease;
     transition-duration: 0.15s;
     transition-property: transform;
-    border-radius: 4px;
+    border-radius: 12px;
     background-color: #f5f5eb;
     bottom: -10px;
     background-color: #f5f5eb;
-    transform: ${({ burgerMenu }) =>
-      burgerMenu
-        ? `translate3d(0,-20px, 0) rotate(-90deg)`
+    transform: ${({ burgerOpen }) =>
+      burgerOpen
+        ? `translate3d(0,-18px, 0) rotate(-90deg)`
         : `translate3d(0, 0px, 0) rotate(0deg)`}
   };
 `;
 
-const Dropdown = styled.div`
+const Dropdown = styled(motion.div)`
+  height: calc(100% - 80px);
   position: fixed;
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: hidden;
+  justify-content: space-around;
   background-color: #17181b;
-  margin-top: 0px;
-  min-width: 100%;
+  width: 100%;
   box-shadow: 0px 6px 8px -4px rgba(0, 0, 0, 0.9);
-  z-index: 10;
-  margin-top: 1px;
+  z-index: 1;
+  padding: 60px 0px;
+  box-sizing: border-box;
   margin-left: auto;
   left: 0;
-  transition: width 0.3s ease;
-  height: ${({ burgerMenu }) => (burgerMenu ? "162px" : "0px")};
 `;
 
-const InputContainer = styled.form`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: row;
-  transition: all 0.3s;
-  border-radius: 10em;
-  background-color: ${({ inputOpen }) =>
-    inputOpen ? "rgb(12, 12, 12)" : "#17181b"};
+const Form = styled(motion.form)`
+  padding: 0px 20px;
+  box-sizing: border-box;
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
 `;
 
-const Input = styled.input`
-  font-size: 17px;
-  font-weight: 400;
-  letter-spacing: 0.4;
-  outline: none;
-  margin: 1px 0px;
-  width: ${({ inputOpen }) => (inputOpen ? "253px" : "0px")};
-  height: 27px;
-  border: none;
-  color: #c3c5c7;
-  font-weight: 500;
-  padding-left: ${({ inputOpen }) => (inputOpen ? "7px" : "0px")};
-  overflow: hidden;
-  background-color: ${({ inputOpen }) =>
-    inputOpen ? "rgb(12, 12, 12)" : "#17181b"};
-  border-radius: 10em;
-  transition: all 0.3s;
+const HeartIconContainer = styled(motion.button)`
+  filter: invert(93%) sepia(6%) saturate(90%) hue-rotate(169deg) brightness(88%)
+    contrast(83%);
+  transition: 0.3s ease;
+  margin: 0px 12px;
+  margin-bottom: 1.2px;
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+  &:hover {
+    filter: invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg)
+      brightness(102%) contrast(105%);
+  }
 `;
 
-const GlobalStyle = createGlobalStyle`
- body {
-   overflow: ${({ burgerMenu }) => (burgerMenu ? "hidden" : "scroll")};
+const AboutIconContainer = styled(motion.button)`
+  filter: invert(93%) sepia(6%) saturate(90%) hue-rotate(169deg) brightness(88%)
+    contrast(83%);
+  transition: 0.3s ease;
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+  &:hover {
+    filter: invert(98%) sepia(2%) saturate(0%) hue-rotate(213deg)
+      brightness(102%) contrast(105%);
   }
 `;
