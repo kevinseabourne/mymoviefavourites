@@ -2,9 +2,7 @@ import { useState, useEffect, useContext, useRef } from "react";
 import AppContext from "../../context/appContext";
 import styled from "styled-components";
 import ImageLoader from "./imageLoader";
-import Link from "next/link";
 import { isArrayEmpty } from "./utils/isEmpty";
-import { LoadingSpinner } from "./loadingSpinner";
 import { useRouter } from "next/router";
 import { motion } from "framer-motion";
 import ReactStars from "react-rating-stars-component";
@@ -17,10 +15,20 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
   const imageContainerRef = useRef(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [focus, setFocus] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(null);
   const [movieInFavourites, setMovieInFavourites] = useState(false);
-  const loadingSpinnerRef = useRef(null);
 
   const handleImageLoad = () => setImageLoaded(true);
+
+  useEffect(() => {
+    window.addEventListener("resize", getDimensions);
+
+    return () => window.removeEventListener("resize", getDimensions);
+  }, []);
+
+  const getDimensions = () => {
+    setWindowWidth(window.innerWidth);
+  };
 
   useEffect(() => {
     if (isArrayEmpty(favouriteMovies)) {
@@ -42,26 +50,43 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
   }, [status]);
 
   const handleItemClick = (movie) => {
-    handleSelectedMovie(movie);
+    // ------------------------ Notes ------------------------ //
+    // for mobile and tablet when you click on the item it will set focus to true
+    // which shows the rating and favourite button, if you press again it will then
+    // take you to the movie page.
+    if (windowWidth <= 768) {
+      setFocus(true);
+    } else {
+      setFocus(false);
+    }
 
-    router.push(
-      router.pathname === "/favourites" ? "favourites/[id]" : "/[id]",
-      movie.title.toLowerCase().replace(/[{L}!#$'"@`#*+)(:;{}\s]/g, "-")
-    );
+    if ((windowWidth <= 768 && focus) || windowWidth > 768) {
+      handleSelectedMovie(movie);
+      const { push, pathname } = router;
+
+      const cleanUpTitle = movie.title
+        .toLowerCase()
+        .replace(/[{L}!#$'"@`#*+)(:;{}\s]/g, "-");
+
+      push(
+        router.pathname === "/favourites" ? "/favourites/[id]" : "/[id]",
+        `${pathname === "/favourites" ? "/favourites/" : "/"}${cleanUpTitle}`
+      );
+    }
   };
 
   const handleFavouriteClick = (movie) => {
-    handleFavouriteSelected(movie);
+    handleFavouriteSelected(movie, movieInFavourites);
   };
 
   const itemAnimation = {
     hidden: {
-      y: 20,
+      y: 12,
       opacity: 0,
     },
     show: {
-      opacity: 1,
       y: 0,
+      opacity: 1,
     },
   };
 
@@ -133,7 +158,6 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
     <Container variants={itemAnimation}>
       <ImageContainer
         tabIndex="0"
-        // role="button"
         onKeyPress={() => {
           handleItemClick(movie);
         }}
@@ -174,7 +198,7 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
         <ImageLoader
           key={movie.poster_path}
           src={"https://image.tmdb.org/t/p/w500/" + movie.poster_path}
-          width="202px"
+          width="100%"
           borderRadius="10px"
           placeholderSize="150%"
           opacity={0}
@@ -222,7 +246,9 @@ const Container = styled(motion.div)`
   justify-content: center;
 `;
 
-const ImageContainer = styled(motion.button)`
+const ImageContainer = styled(motion.div)`
+  width: 100%;
+  max-width: 202px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -233,6 +259,9 @@ const ImageContainer = styled(motion.button)`
   border: 3.4px solid transparent;
   &:focus:not(:focus-visible) {
     outline: none;
+  }
+  @media (max-width: 465px) {
+    max-width: 100%;
   }
 `;
 
@@ -259,8 +288,10 @@ const FavouriteButton = styled(motion.button)`
   top: 0;
   z-index: 20;
   right: 0;
-  margin-top: 12px;
-  margin-right: 16px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  padding-right: 16px;
+  padding-left: 16px;
   &:focus:not(:focus-visible) {
     outline: none;
   }
@@ -287,6 +318,13 @@ const InfoContainer = styled(motion.div)`
   flex-direction: column;
   text-align: left;
   padding-top: 5px;
+  width: 100%;
+  @media (max-width: 465px) {
+    text-align: center;
+    padding-left: 10px;
+    padding-right: 10px;
+    box-sizing: border-box;
+  }
 `;
 
 const Title = styled(motion.span)`
@@ -298,7 +336,6 @@ const Title = styled(motion.span)`
   text-overflow: ellipsis;
   line-height: 1.5;
   overflow: hidden;
-  width: 12.5rem;
 `;
 
 const ReleaseDate = styled(motion.span)`
