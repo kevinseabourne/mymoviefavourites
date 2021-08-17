@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import PropTypes from "prop-types";
 import styled from "styled-components";
@@ -43,10 +43,19 @@ const ImageLoader = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const loadingSpinnerRef = useRef(null);
 
+  const isMounted = useRef(null);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => (isMounted.current = false);
+  }, []);
+
   const handleLoadComplete = () => {
-    setIsLoaded(true);
-    if (handleOnLoadOutside) {
-      handleOnLoadOutside();
+    if (isMounted.current) {
+      setIsLoaded(true);
+      if (handleOnLoadOutside) {
+        handleOnLoadOutside();
+      }
     }
   };
 
@@ -124,6 +133,7 @@ const ImageLoader = ({
 export default ImageLoader;
 
 const Container = styled(motion.div)`
+  width: 100%;
   position: relative;
   box-shadow: ${({ boxShadow }) => (boxShadow ? boxShadow : "none")};
   margin-top: ${({ marginTop }) => (marginTop ? marginTop : "none")};
