@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import styled from "styled-components";
-import { motion, AnimatePresence, AnimateSharedLayout } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { isArrayEmpty } from "./utils/isEmpty";
 import MovieItem from "./movieItem.js";
 import { LoadingSpinner } from "./loadingSpinner";
@@ -13,15 +13,16 @@ const Movies = ({
   status,
   noSearchResult,
   searching,
+  infiniteScroll,
   favouriteMovies,
   incrementPage,
 }) => {
-  const router = useRouter();
+  const { pathname } = useRouter();
   const loadingSpinnerRef = useRef(null);
   const [animationComplete, setAnimationComplete] = useState(false);
 
   const { ref, inView } = useInView({
-    rootMargin: "500px 0px",
+    rootMargin: "0px 0px",
   });
 
   useEffect(() => {
@@ -46,17 +47,26 @@ const Movies = ({
 
   const loadingItemAnimation = {
     hidden: {
-      opacity: 1,
+      opacity: 0,
+      y: 20,
     },
     show: {
       opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+      },
     },
   };
 
   const infiniteScrollCondition =
-    animationComplete && !searching && router.pathname !== "/favourites";
+    animationComplete && !searching && pathname !== "/favourites";
 
-  return isArrayEmpty(movies) ? (
+  const renderCondition = infiniteScroll
+    ? isArrayEmpty(movies)
+    : status !== "pending" && isArrayEmpty(movies);
+
+  return renderCondition ? (
     <Container>
       <MoviesContainer
         variants={moviesAnimation}
@@ -107,7 +117,7 @@ const MoviesContainer = styled(motion.div)`
   grid-auto-flow: row;
   grid-column-end: auto;
   grid-gap: calc(100vw * 0.005) 1.5%;
-  margin-top: 14px;
+  margin: 14px 0px;
   padding: 0px 15px;
   @media (max-width: 2600px) {
     grid-gap: calc(100vw * 0.01) 2%;
@@ -131,6 +141,7 @@ const LoadingItem = styled(motion.div)`
   justify-content: center;
   width: 202px;
   height: 309.75px;
+  margin-bottom: 52px;
   border-radius: 10px;
   background-color: rgba(18, 18, 18, 0.7);
   box-shadow:   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
@@ -141,5 +152,6 @@ const Title = styled(motion.h1)`
   position: absolute;
   left: 50%;
   transform: translate(-50%, -50%);
-  margin-top: 60px;
+  margin-top: 80px;
+  text-align: center;
 `;

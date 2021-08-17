@@ -11,11 +11,6 @@ export async function getTrendingMovies(page) {
       return movies.push(movie);
     });
   }
-  // // This is adding a property to each movie object.
-  // const allMovies = movies.map((obj) => {
-  //   obj["favourite"] = false;
-  //   return obj;
-  // });
 
   // Only show movies that have been released
   const filteredMovies = movies.filter((movie) => {
@@ -53,11 +48,6 @@ export async function getGenreMovies(page, genreId, sortBy) {
       return movies.push(obj);
     });
   }
-  // // This is adding a property to each movie object.
-  // const allMovies = promises.map((obj) => {
-  //   obj["favourite"] = false;
-  //   return obj;
-  // });
   return allMovies;
 }
 

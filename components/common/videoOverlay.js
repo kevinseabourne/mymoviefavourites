@@ -1,5 +1,4 @@
-import React, { useRef, useEffect } from "react";
-// import PropTypes from "prop-types";
+import { useRef, useEffect } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 import VideoLoader from "./videoLoader";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,7 +13,6 @@ const VideoOverlay = ({
   borderRadius,
   placeholderSize,
   centerVideo,
-  autoPlay,
 }) => {
   const spinnerRef = useRef(null);
   const videoRef = useRef(null);
