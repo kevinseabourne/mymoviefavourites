@@ -6,9 +6,7 @@ import styled from "styled-components";
 import { LoadingSpinner } from "../../components/common/loadingSpinner";
 
 const Favourites = () => {
-  const { movies, status, favouriteMovies, selectedGenre } = useContext(
-    AppContext
-  );
+  const { status, favouriteMovies, selectedGenre } = useContext(AppContext);
 
   const loadingSpinnerRef = useRef(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -19,9 +17,9 @@ const Favourites = () => {
 
   return (
     <Container>
-      {isArrayEmpty(movies) ? (
+      {isArrayEmpty(favouriteMovies) ? (
         <Movies
-          movies={movies}
+          movies={favouriteMovies}
           favouriteMovies={favouriteMovies}
           status={status}
         />
