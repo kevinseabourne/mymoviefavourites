@@ -47,7 +47,6 @@ const Header = ({
     { query: "title.asc", title: "Title" },
   ]);
   const [inputOpen, setInputOpen] = useState(false);
-  const [renderChangeOnce, setRenderChangeOnce] = useState(false);
 
   const {
     register,
@@ -63,35 +62,26 @@ const Header = ({
   useEffect(() => {
     window.addEventListener("mousedown", handleClickOutside);
     return () => {
+      clearTimeout(timeout);
       window.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   useEffect(() => {
-    if (pathname === "/favourites") {
-      !renderChangeOnce &&
-        setSelectedSortBy({
-          query: "primary_release_date.desc",
-          title: "Year",
-        });
-      setRenderChangeOnce(true);
-    } else if (!renderChangeOnce) {
-      !renderChangeOnce && setSelectedSortBy({ query: "", title: "Trending" });
-      setRenderChangeOnce(true);
+    if (searching) {
+      // have the search results sort in alphabetical order
+      setSelectedSortBy({ query: "title.asc", title: "Title" });
+      handleSelectedSortBy({ query: "title.asc", title: "Title" });
     }
-  });
+  }, [searching]);
 
-  // useEffect(() => {
-  //   if (!inputOpen) {
-  //     setValue("search", "");
-  //
-  //     if (searching) {
-  //       // using timeout here to allow the input animation to finish prevent lag
-  //       timeout.current = setTimeout(() => clearSearchResults(), 300);
-  //     }
-  //   }
-  //   return () => clearTimeout(timeout);
-  // }, [inputOpen]);
+  useEffect(() => {
+    // when on the favourites page by default have the movies sort in alphabetical order
+    if (pathname === "/favourites") {
+      setSelectedSortBy({ query: "title.asc", title: "Title" });
+      handleSelectedSortBy({ query: "title.asc", title: "Title" });
+    }
+  }, [pathname]);
 
   // ------------------------ dropdown menu's ------------------------ //
 
@@ -188,11 +178,15 @@ const Header = ({
     // * If a genre was selected which was not 'All' and then you pressed either home button
     //   it would display trending movies but not 'All', to prevent this I changed the first argument below from false to
     //   the 'All' genre object.
-    handleGetMovies(
-      { query: null, title: "All" },
-      { query: "", title: "Trending" }
-    );
-    push("/");
+
+    // timeout to allow for input exit animation to not lag
+    timeout.current = setTimeout(() => {
+      handleGetMovies(
+        { query: null, title: "All" },
+        { query: "", title: "Trending" }
+      );
+      push("/");
+    }, 300);
   };
 
   // ------------------------ favourite & About Links ------------------------ //
