@@ -138,7 +138,7 @@ const Header = ({
         name: "All",
       });
     }
-    query && handleSearch(search);
+    search && handleSearch(search);
   };
 
   const handleInputOpen = () => {
