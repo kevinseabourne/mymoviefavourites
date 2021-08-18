@@ -13,8 +13,7 @@ import crossIcon from "../../public/icons/cross.svg";
 import ReactStars from "react-rating-stars-component";
 
 const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
-  const router = useRouter();
-  const { pathname } = router;
+  const { push, pathname, query } = useRouter();
   const loadingSpinnerRef = useRef(null);
   const [selectedMovie, setSelectedMovie] = useState({});
   const [status, setStatus] = useState("idle");
@@ -26,11 +25,23 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
   useEffect(() => {
     const fetchData = async () => {
       setStatus("pending");
-      const selected = JSON.parse(localStorage.getItem("selectedMovie"));
-      setSelectedMovie(selected);
 
-      checkMovieFavourites(selected);
-      handleTrailer(selected);
+      const selected = JSON.parse(localStorage.getItem("selectedMovie"));
+
+      // if the query is not the movie from local storage which is stored on click then redirect to 404 page
+      const expectedQuery = selected.title
+        .toLowerCase()
+        .replace(/[{L}!#$'"@`#*+)(:;{}\s]/g, "-");
+
+      if (query.id !== expectedQuery) {
+        push("/404");
+      } else {
+        setSelectedMovie(selected);
+
+        checkMovieFavourites(selected);
+        handleTrailer(selected);
+        setStatus("resolved");
+      }
     };
 
     fetchData();
@@ -63,7 +74,6 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
       } else {
         setNoTrailer(true);
       }
-      setStatus("resolved");
     }
   };
 
@@ -152,7 +162,7 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
     },
   };
 
-  return status === "pending" ? (
+  return isObjEmpty(selectedMovie) ? (
     <LoadingSpinner ref={loadingSpinnerRef} />
   ) : (
     <Container>
