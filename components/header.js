@@ -1,9 +1,6 @@
-import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState, useEffect, useRef, useContext } from "react";
-import AppContext from "../context/appContext";
+import { useState, useEffect, useRef } from "react";
 import styled, { keyframes } from "styled-components";
-import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import Input from "./common/input";
 import ResponsiveHeader from "./responsiveHeader";
@@ -19,26 +16,23 @@ const Header = ({
   handleSearch,
   genres,
   searching,
-  clearSearchResults,
 }) => {
-  const { push, pathname } = useRouter();
+  const router = useRouter();
+  const { push, pathname } = router;
   const genreDropdownRef = useRef(null);
   const sortByDropdownRef = useRef(null);
   const timeout = useRef(null);
+
   const [genreDropdownOpen, setGenreDropdownOpen] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState({
     id: null,
     name: "All",
   });
   const [sortByDropdownOpen, setSortByDropdownOpen] = useState(false);
-  const [selectedSortBy, setSelectedSortBy] = useState(
-    pathname === "/favourites"
-      ? { query: "primary_release_date.desc", title: "Year" }
-      : {
-          query: "",
-          title: "Trending",
-        }
-  );
+  const [selectedSortBy, setSelectedSortBy] = useState({
+    query: "",
+    title: "Trending",
+  });
   const [sortByOptions] = useState([
     { query: "", title: "Trending" },
     { query: "popular", title: "Popular" },
@@ -47,6 +41,7 @@ const Header = ({
     { query: "title.asc", title: "Title" },
   ]);
   const [inputOpen, setInputOpen] = useState(false);
+  const [showSkipLink, setShowSkipLink] = useState(false);
 
   const {
     register,
@@ -67,38 +62,83 @@ const Header = ({
     };
   }, []);
 
-  useEffect(() => {
-    if (searching) {
-      // have the search results sort in alphabetical order
-      setSelectedSortBy({ query: "title.asc", title: "Title" });
-      handleSelectedSortBy({ query: "title.asc", title: "Title" });
-    }
-  }, [searching]);
+  // useEffect(() => {
+  //   if (searching) {
+  //     // have the search results sort in alphabetical order
+  //     setSelectedGenre({ id: null, name: "All" });
+  //     setSelectedSortBy({ query: "title.asc", title: "Title" });
+  //     handleSelectedSortBy({ query: "title.asc", title: "Title" });
+  //   }
+  // }, [searching]);
 
-  useEffect(() => {
-    // when on the favourites page by default have the movies sort in alphabetical order
-    if (pathname === "/favourites") {
-      setSelectedSortBy({ query: "title.asc", title: "Title" });
-      handleSelectedSortBy({ query: "title.asc", title: "Title" });
-    }
-  }, [pathname]);
+  // useEffect(() => {
+  //   // when on the favourites page by default have the movies sort in alphabetical order
+  //   if (pathname === "/favourites") {
+  //     console.log(selectedSortBy);
+  //     setSelectedGenre({ id: null, name: "All" });
+  //     setSelectedSortBy({ query: "title.asc", title: "Title" });
+  //     handleSelectedSortBy({ query: "title.asc", title: "Title" });
+  //   }
+  // }, [pathname]);
 
   // ------------------------ dropdown menu's ------------------------ //
 
+  const handleGenreClick = (genre) => {
+    // ------------------------ Bug Fixed ------------------------ //
+    // Fixed a bug that when you were searching
+    setSelectedGenre(genre);
+
+    if (pathname === "/about" || pathname === "/404") {
+      push("/");
+      handleGetMovies(genre, false);
+    }
+
+    if (
+      (!searching && pathname === "/") ||
+      (!searching && pathname === "/[id]")
+    ) {
+      closeAndClearInput();
+      timeout.current = setTimeout(() => {
+        push("/");
+        handleGetMovies(genre, false);
+      }, 300);
+    }
+    if (searching || (searching && pathname === "/[id]")) {
+      push("/");
+      handleGenreFilter(genre);
+    }
+
+    if (pathname === "/favourites" || pathname === "/favourites/[id]") {
+      push("/favourites");
+      handleGenreFilter(genre);
+    }
+  };
+
   const handleSortByClick = (option) => {
-    if (pathname !== "/" && pathname !== "/favourites") {
+    if (pathname === "/about" || pathname === "/404") {
       push("/");
     }
     setSelectedSortBy(option);
 
-    if (searching || pathname === "/favourites") {
+    if (pathname === "/favourites" || pathname === "/favourites/[id]") {
       if (option.title === "Trending" || option.title === "Popular") {
         closeAndClearInput();
-        handleGetMovies(false, option);
+        timeout.current = setTimeout(() => {
+          push("/");
+          handleGetMovies(false, option);
+        }, 300);
       }
+      push("/favourites");
+      handleSelectedSortBy(option);
+    } else if (searching) {
+      push("/");
       handleSelectedSortBy(option);
     } else {
-      handleGetMovies(false, option);
+      closeAndClearInput();
+      timeout.current = setTimeout(() => {
+        push("/");
+        handleGetMovies(false, option);
+      }, 300);
     }
   };
 
@@ -198,6 +238,16 @@ const Header = ({
 
   return (
     <Container>
+      <SkipHeaderLink
+        href="#main"
+        onFocus={() => {
+          setShowSkipLink(true);
+        }}
+        onBlur={() => setShowSkipLink(false)}
+        showSkipLink={showSkipLink}
+      >
+        Skip to Content
+      </SkipHeaderLink>
       <FilterSection>
         <MoviesLabel onClick={handleReturnHomeAndRest} tabIndex="0">
           Movies
@@ -226,13 +276,7 @@ const Header = ({
               {genres.map((genre) => (
                 <DropdownItem
                   key={genre.id}
-                  onClick={() => {
-                    setSelectedGenre(genre);
-
-                    searching || pathname === "/favourites"
-                      ? handleGenreFilter(genre)
-                      : handleGetMovies(genre, false);
-                  }}
+                  onClick={() => handleGenreClick(genre)}
                   disabled={genre.name === selectedGenre.name}
                 >
                   {genre.name}
@@ -359,6 +403,23 @@ const Container = styled.div`
   position: fixed;
   @media (max-width: 632px) {
     height: 80px;
+  }
+`;
+
+const SkipHeaderLink = styled.a`
+  opacity: ${({ showSkipLink }) => (showSkipLink ? 1 : 0)};
+  padding: 16px 24px;
+  position: absolute;
+  top: 110px;
+  left: 30px;
+  font-size: 1rem;
+  border-radius: 9px;
+  background-color: white;
+  box-shadow: rgba(0, 0, 0, 0.02) 0px -5.9px 2.7px,
+    rgba(0, 0, 0, 0.024) 0px -1.2px 6.9px, rgba(0, 0, 0, 0.03) 0px 8px 14.2px,
+    rgba(0, 0, 0, 0.04) 0px 21.9px 29.2px, rgba(0, 0, 0, 0.07) 0px 49px 80px;
+  &:focus {
+    outline: initial solid initial;
   }
 `;
 

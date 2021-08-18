@@ -157,31 +157,31 @@ export default function MyApp({
 
     if (newSelectedGenre.name !== "All") {
       const array =
-        pathname === "/favourites"
+        pathname === "/favourites" || pathname === "/favourites/[id]"
           ? initialFavouriteMovies
           : initialSearchResultMovies;
 
-      // Prevent the movies data from being filtered over and over I stored the inital search results in a seperate state to use for every genre filter.
+      // prevent the movies data from being filtered over and over I stored the inital search results in a seperate state to use for every genre filter.
       const filteredMovies = array.filter((m) => {
         const genreIdsClone = [...m.genre_ids];
         const answer = genreIdsClone.find((id) => id === newSelectedGenre.id);
         return answer;
       });
 
-      // if you filter the movies and there are no movies that match then instead of showing a loading spinner is show a message saying no movies
+      // if you filter the movies and there are no movies that match then instead of showing a loading spinner it show's a message saying no movies
       isArrayEmpty(filteredMovies)
         ? setNoSearchResult(false)
         : setNoSearchResult(true);
 
       // movies are reset to empty to allow for animation
-      if (pathname === "/favourites") {
+      if (pathname === "/favourites" || pathname === "/favourites/[id]") {
         setFavouriteMovies([]);
         setFavouriteMovies(filteredMovies);
       } else {
         setMovies([]);
         setMovies(filteredMovies);
       }
-    } else if (pathname === "/favourites") {
+    } else if (pathname === "/favourites" || pathname === "/favourites/[id]") {
       setFavouriteMovies([]);
       setFavouriteMovies(initialFavouriteMovies);
     } else {
@@ -209,8 +209,10 @@ export default function MyApp({
 
   const handleTopRatedFilter = () => {
     // Sorts the movies based on the movie rating in descending order.
-    const moviesClone =
-      pathname === "/favourites" ? [...favouriteMovies] : [...movies];
+    const favouritesRoute =
+      pathname === "/favourites" || pathname === "/favourites/[id]";
+
+    const moviesClone = favouritesRoute ? [...favouriteMovies] : [...movies];
 
     const filteredMovies = moviesClone
       .sort((a, b) => {
@@ -219,7 +221,7 @@ export default function MyApp({
       .reverse();
 
     // movies are reset to empty to allow for animation
-    if (pathname === "/favourites") {
+    if (favouritesRoute) {
       setFavouriteMovies([]);
       setFavouriteMovies(filteredMovies);
     } else {
@@ -230,8 +232,9 @@ export default function MyApp({
 
   const handleYearFilter = () => {
     // Sorts the movies from newest - oldest when you sort by Year
-    const moviesClone =
-      pathname === "/favourites" ? [...favouriteMovies] : [...movies];
+    const favouritesRoute =
+      pathname === "/favourites" || pathname === "/favourites/[id]";
+    const moviesClone = favouritesRoute ? [...favouriteMovies] : [...movies];
     const filteredMovies = moviesClone
       .sort((a, b) => {
         return (
@@ -240,7 +243,7 @@ export default function MyApp({
       })
       .reverse();
     // movies are reset to empty to allow for animation
-    if (pathname === "/favourites") {
+    if (favouritesRoute) {
       setFavouriteMovies([]);
       setFavouriteMovies(filteredMovies);
     } else {
@@ -251,14 +254,17 @@ export default function MyApp({
 
   const handleTitleFilter = () => {
     // Sorts the movies in alphabetical order from a - z
-    const moviesClone =
-      pathname === "/favourites" ? [...favouriteMovies] : [...movies];
+    const favouritesRoute =
+      pathname === "/favourites" || pathname === "/favourites/[id]";
+
+    const moviesClone = favouritesRoute ? [...favouriteMovies] : [...movies];
+
     const filteredMovies = moviesClone.sort((a, b) => {
       return a.title.localeCompare(b.title);
     });
 
     // movies are reset to empty to allow for animation
-    if (pathname === "/favourites") {
+    if (favouritesRoute) {
       setFavouriteMovies([]);
       setFavouriteMovies(filteredMovies);
     } else {
@@ -292,7 +298,6 @@ export default function MyApp({
           return movie.id !== favMovie.id;
         });
 
-        pathname === "/favourites" && setMovies(deletedMovieFromFavMovies);
         setFavouriteMovies(deletedMovieFromFavMovies);
         localStorage.setItem(
           "favouriteMovies",
@@ -336,7 +341,6 @@ export default function MyApp({
         setMovies([]);
         setMovies(response);
         setInitialSearchResultMovies(response);
-        // handleSortBy({ query: "title.asc", title: "Title" });
         setStatus("resolved");
       } else {
         // used to display a message saying 'no movies found' for a search result instead of a loading spinner
@@ -409,7 +413,7 @@ export default function MyApp({
           handleSearching={handleSearching}
           clearSearchResults={clearSearchResults}
         />
-        <CompenentMargin>
+        <CompenentMargin id="main">
           <GlobalStyle />
           <ThemeProvider theme={theme}>
             <Component {...pageProps} />
