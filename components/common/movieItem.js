@@ -199,7 +199,7 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
 
         <ImageLoader
           key={movie.poster_path}
-          src={"https://image.tmdb.org/t/p/w500/" + movie.poster_path}
+          src={"https://image.tmdb.org/t/p/w342/" + movie.poster_path}
           alt={movie.title}
           width="100%"
           borderRadius="10px"
