@@ -30,13 +30,8 @@ export default function MyApp({
     []
   );
 
-  const [favouriteMovies, setFavouriteMovies] = useState(() => {
-    const lsFavouriteMovies =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem("favouriteMovies")
-        : null;
-    return lsFavouriteMovies !== null ? JSON.parse(lsFavouriteMovies) : [];
-  });
+  const [favouriteMovies, setFavouriteMovies] = useState([]);
+  const [initialFavouriteMovies, setinitialFavouriteMovies] = useState([]);
   const [genres, setGenres] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState({ id: null, name: "All" });
   const [selectedSortBy, setSelectedSortBy] = useState({
@@ -49,13 +44,22 @@ export default function MyApp({
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    if (pathname === "/favourites") {
-      setMovies(favouriteMovies);
-    } else {
-      setMovies(allTrendingMovies);
+    const lsFavouriteMovies = window.localStorage.getItem("favouriteMovies");
+    lsFavouriteMovies;
+    if (lsFavouriteMovies) {
+      setFavouriteMovies(JSON.parse(lsFavouriteMovies));
+      setinitialFavouriteMovies(JSON.parse(lsFavouriteMovies));
     }
-    setGenres(allGenres);
-  }, [pathname]);
+
+    const removeDocumentaries = allGenres.filter(
+      (genre) => genre.name !== "Documentary"
+    );
+    const updatedGenres = [{ id: null, name: "All" }, ...removeDocumentaries];
+
+    setGenres(updatedGenres);
+
+    setMovies(allTrendingMovies);
+  }, []);
 
   useEffect(() => {
     if (page > 1) {
@@ -154,7 +158,7 @@ export default function MyApp({
     if (newSelectedGenre.name !== "All") {
       const array =
         pathname === "/favourites"
-          ? favouriteMovies
+          ? initialFavouriteMovies
           : initialSearchResultMovies;
 
       // Prevent the movies data from being filtered over and over I stored the inital search results in a seperate state to use for every genre filter.
@@ -170,13 +174,19 @@ export default function MyApp({
         : setNoSearchResult(true);
 
       // movies are reset to empty to allow for animation
-      setMovies([]);
-      setMovies(filteredMovies);
+      if (pathname === "/favourites") {
+        setFavouriteMovies([]);
+        setFavouriteMovies(filteredMovies);
+      } else {
+        setMovies([]);
+        setMovies(filteredMovies);
+      }
+    } else if (pathname === "/favourites") {
+      setFavouriteMovies([]);
+      setFavouriteMovies(initialFavouriteMovies);
     } else {
       setMovies([]);
-      setMovies(
-        pathname === "/favourites" ? favouriteMovies : initialSearchResultMovies
-      );
+      setMovies(initialSearchResultMovies);
     }
   };
 
@@ -199,7 +209,8 @@ export default function MyApp({
 
   const handleTopRatedFilter = () => {
     // Sorts the movies based on the movie rating in descending order.
-    const moviesClone = [...movies];
+    const moviesClone =
+      pathname === "/favourites" ? [...favouriteMovies] : [...movies];
 
     const filteredMovies = moviesClone
       .sort((a, b) => {
@@ -208,13 +219,19 @@ export default function MyApp({
       .reverse();
 
     // movies are reset to empty to allow for animation
-    setMovies([]);
-    setMovies(filteredMovies);
+    if (pathname === "/favourites") {
+      setFavouriteMovies([]);
+      setFavouriteMovies(filteredMovies);
+    } else {
+      setMovies([]);
+      setMovies(filteredMovies);
+    }
   };
 
   const handleYearFilter = () => {
     // Sorts the movies from newest - oldest when you sort by Year
-    const moviesClone = [...movies];
+    const moviesClone =
+      pathname === "/favourites" ? [...favouriteMovies] : [...movies];
     const filteredMovies = moviesClone
       .sort((a, b) => {
         return (
@@ -223,21 +240,31 @@ export default function MyApp({
       })
       .reverse();
     // movies are reset to empty to allow for animation
-    setMovies([]);
-    setMovies(filteredMovies);
+    if (pathname === "/favourites") {
+      setFavouriteMovies([]);
+      setFavouriteMovies(filteredMovies);
+    } else {
+      setMovies([]);
+      setMovies(filteredMovies);
+    }
   };
 
   const handleTitleFilter = () => {
     // Sorts the movies in alphabetical order from a - z
-    const moviesClone = [...movies];
+    const moviesClone =
+      pathname === "/favourites" ? [...favouriteMovies] : [...movies];
     const filteredMovies = moviesClone.sort((a, b) => {
       return a.title.localeCompare(b.title);
     });
 
     // movies are reset to empty to allow for animation
-    setMovies([]);
-    setMovies(filteredMovies);
-    setStatus("resolved");
+    if (pathname === "/favourites") {
+      setFavouriteMovies([]);
+      setFavouriteMovies(filteredMovies);
+    } else {
+      setMovies([]);
+      setMovies(filteredMovies);
+    }
   };
 
   // ------------------------ Movie Item ------------------------ //
@@ -299,7 +326,6 @@ export default function MyApp({
   const handleSearch = async (query) => {
     setSearching(true);
     pathname !== "/" && pathname !== "/favourites" && push("/");
-    // used to display a message saying 'no movies found' for a search result instead of a loading spinner
     if (pathname === "/favourites") {
       handleFavouritesSearch(query);
     } else {
@@ -310,8 +336,10 @@ export default function MyApp({
         setMovies([]);
         setMovies(response);
         setInitialSearchResultMovies(response);
+        // handleSortBy({ query: "title.asc", title: "Title" });
         setStatus("resolved");
       } else {
+        // used to display a message saying 'no movies found' for a search result instead of a loading spinner
         setNoSearchResult(true);
       }
     }
@@ -396,7 +424,7 @@ MyApp.getInitialProps = async (appContext) => {
   const pageProps = await App.getInitialProps(appContext);
 
   const genres = await getGenres();
-  const allGenres = [{ id: null, name: "All" }, ...genres.data.genres];
+  const allGenres = genres.data.genres;
 
   const allTrendingMovies = await getTrendingMovies(1);
 
