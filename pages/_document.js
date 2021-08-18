@@ -64,7 +64,7 @@ export default class MyDocument extends Document {
 
           <meta
             property="og:description"
-            content="Search for movies, save Your favourites and watch trailers"
+            content="Search for movies, save your favourites and watch trailers"
           />
 
           <meta

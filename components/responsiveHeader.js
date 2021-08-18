@@ -124,7 +124,7 @@ const ResponsiveHeader = ({ handleRouteChange, onSubmit }) => {
   return (
     <Container>
       <GlobalStyle burgerOpen={burgerOpen} />
-      <BurgerContainer onClick={handleBurgerClick}>
+      <BurgerContainer onClick={handleBurgerClick} aria-label="header">
         <Burger ref={burgerRef} value={burgerOpen} id="burgerOpen">
           <BurgerInner burgerOpen={burgerOpen} />
         </Burger>

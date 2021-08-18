@@ -8,7 +8,6 @@ import { getMovies, getTrendingMovies, textSearchMovies } from "./api/movies";
 import { GlobalStyle } from "../globalStyle";
 import styled, { ThemeProvider } from "styled-components";
 import { isArrayEmpty } from "../components/common/utils/isEmpty";
-import { AnimatePresence } from "framer-motion";
 
 const theme = {
   colors: {
