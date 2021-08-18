@@ -1,4 +1,5 @@
 import { useContext } from "react";
+import DynamicHead from "../components/common/dynamicHead";
 import Movies from "../components/common/movies";
 import AppContext from "../context/appContext";
 import styled from "styled-components";
@@ -21,6 +22,7 @@ export default function Home() {
   } = useContext(AppContext);
   return (
     <Container>
+      <DynamicHead title="My Movie Favs" urlQuery="/" />
       <Movies
         movies={movies}
         status={status}

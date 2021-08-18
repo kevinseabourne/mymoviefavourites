@@ -2,6 +2,7 @@ import { useState, useRef, useContext, useEffect } from "react";
 import AppContext from "../../context/appContext";
 import { isArrayEmpty } from "../../components/common/utils/isEmpty";
 import Movies from "../../components/common/movies";
+import DynamicHead from "../../components/common/dynamicHead";
 import styled from "styled-components";
 import { LoadingSpinner } from "../../components/common/loadingSpinner";
 
@@ -17,6 +18,7 @@ const Favourites = () => {
 
   return (
     <Container>
+      <DynamicHead title="My Movie Favs | Favourites" urlQuery="/" />
       {isArrayEmpty(favouriteMovies) ? (
         <Movies
           movies={favouriteMovies}

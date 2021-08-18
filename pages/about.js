@@ -1,9 +1,11 @@
+import DynamicHead from "../components/common/dynamicHead";
 import styled from "styled-components";
 import ImageLoader from "../components/common/imageLoader";
 
 const About = () => {
   return (
     <Container>
+      <DynamicHead title="My Movie Favs | About" urlQuery="/about" />
       <Title>About</Title>
       <Description>
         Watch trailer's and favourite the movies you love. (Please note:
