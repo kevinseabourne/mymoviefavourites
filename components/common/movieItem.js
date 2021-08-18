@@ -21,6 +21,7 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
   const handleImageLoad = () => setImageLoaded(true);
 
   useEffect(() => {
+    setWindowWidth(window.innerWidth);
     window.addEventListener("resize", getDimensions);
 
     return () => window.removeEventListener("resize", getDimensions);
