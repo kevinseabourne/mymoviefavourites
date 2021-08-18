@@ -55,9 +55,9 @@ const Input = ({
       <AnimatePresence>
         {inputOpen && searchInputValue && searchInputValue.length >= 1 && (
           <IconBox
-            // onClick={(e) => {
-            //   clearInputAndFocus();
-            // }}
+            onClick={clearInputAndFocus}
+            onKeyDown={({ keyCode }) => keyCode === 13 && clearInputAndFocus()}
+            tabIndex="0"
             variants={iconBoxAnimation}
             initial="hidden"
             animate={
