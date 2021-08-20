@@ -1,4 +1,5 @@
 import http from "./httpService";
+import { removeDuplicateObjectFromArray } from "../../components/common/utils/removeDupObjs";
 
 export async function getTrendingMovies(page) {
   let movies = [];
@@ -16,7 +17,9 @@ export async function getTrendingMovies(page) {
   const filteredMovies = movies.filter((movie) => {
     return movie.vote_average !== 0;
   });
-  return filteredMovies;
+
+  const removedDupMovies = removeDuplicateObjectFromArray(filteredMovies, "id");
+  return removedDupMovies;
 }
 
 export async function getMovies(page, genreId, sortBy) {
@@ -32,23 +35,9 @@ export async function getMovies(page, genreId, sortBy) {
       return movies.push(movie);
     });
   }
-  return movies;
-}
 
-export async function getGenreMovies(page, genreId, sortBy) {
-  const genreQuery = genreId ? `&with_genres=${genreId}` : "&";
-  const sortByQuery = sortBy ? `&sort_by=${sortBy}` : "&";
-  let movies = [];
-  for (let i = page; i <= page + 2; i++) {
-    let { data } = await http.get(
-      `https://api.themoviedb.org/3/discover/movie/?api_key=${process.env.NEXT_PUBLIC_MOVIES_DB_API_KEY}&language=en-US${sortByQuery}&include_adult=false${genreQuery}&vote_average.gte=1&vote_count.gte=2200&page=${i}`
-    );
-    let moviesArray = data.results;
-    moviesArray.map((obj) => {
-      return movies.push(obj);
-    });
-  }
-  return allMovies;
+  const removedDupMovies = removeDuplicateObjectFromArray(movies, "id");
+  return removedDupMovies;
 }
 
 export async function textSearchMovies(query) {
