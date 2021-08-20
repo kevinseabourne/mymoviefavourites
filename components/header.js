@@ -411,7 +411,7 @@ const SkipHeaderLink = styled.a`
   padding: 16px 24px;
   position: absolute;
   top: 110px;
-  left: 30px;
+  left: ${({ showSkipLink }) => (showSkipLink ? "30px" : "-100px")};
   font-size: 1rem;
   border-radius: 9px;
   background-color: white;
