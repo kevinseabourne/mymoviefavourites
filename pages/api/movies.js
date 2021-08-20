@@ -5,7 +5,7 @@ export async function getTrendingMovies(page) {
   let movies = [];
   for (let i = page; i <= page + 2; i++) {
     let { data } = await http.get(
-      `https://api.themoviedb.org/3/trending/movie/week?api_key=${process.env.NEXT_PUBLIC_MOVIES_DB_API_KEY}&page=${i}&include_adult=false`
+      `https://api.themoviedba.org/3/trending/movie/week?api_key=${process.env.NEXT_PUBLIC_MOVIES_DB_API_KEY}&page=${i}&include_adult=false`
     );
     const results = data.results;
     results.map((movie) => {
