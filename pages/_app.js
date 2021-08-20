@@ -61,11 +61,17 @@ export default function MyApp({
   }, []);
 
   useEffect(() => {
-    if (page > 1) {
+    if (page > 1 && infiniteScroll) {
       handleGetMovies(selectedGenre, selectedSortBy);
     }
   }, [page]);
 
+  useEffect(() => {
+    // reset infinite scroll when you are not on either the home page or movie page.
+    if (pathname !== "/" && pathname !== "/[id]" && infiniteScroll) {
+      resetInfiniteScroll();
+    }
+  }, [pathname]);
   // ------------------------ Genre Filter & Sort By ------------------------ //
 
   const handleGenreId = (newSelectedGenre) => {
@@ -125,8 +131,7 @@ export default function MyApp({
       ) {
         const genreId = handleGenreId(newSelectedGenre);
         const sortByQuery = handleSortBy(newSelectedSortBy);
-        setPage(1);
-        setInfiniteScroll(false);
+        resetInfiniteScroll();
         response = await getMovies(1, genreId, sortByQuery);
       } else {
         const genreId = handleGenreId(newSelectedGenre);
@@ -152,6 +157,7 @@ export default function MyApp({
   // ------------------------ Search Results Filtering & Favourites Filtering ------------------------ //
 
   const handleGenreFilter = (newSelectedGenre) => {
+    infiniteScroll && resetInfiniteScroll();
     setSelectedGenre(newSelectedGenre);
 
     if (newSelectedGenre.name !== "All") {
@@ -190,6 +196,7 @@ export default function MyApp({
   };
 
   const handleSelectedSortBy = (newSelectedSortBy) => {
+    infiniteScroll && resetInfiniteScroll();
     setSelectedSortBy(newSelectedSortBy);
     switch (newSelectedSortBy.title) {
       case "Top Rated":
@@ -328,6 +335,7 @@ export default function MyApp({
   // ------------------------ Search ------------------------ //
 
   const handleSearch = async (query) => {
+    infiniteScroll && resetInfiniteScroll();
     setSearching(true);
     pathname !== "/" && pathname !== "/favourites" && push("/");
     if (pathname === "/favourites") {
@@ -382,7 +390,12 @@ export default function MyApp({
   const incrementPage = () => {
     // boolean value for infinite scroll to prevent movies from animating out when data is loading
     !infiniteScroll && setInfiniteScroll(true);
-    setPage((previousState) => previousState + 3);
+    setPage(page + 3);
+  };
+
+  const resetInfiniteScroll = () => {
+    setInfiniteScroll(false);
+    setPage(1);
   };
 
   return (
