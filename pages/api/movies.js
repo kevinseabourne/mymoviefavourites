@@ -5,7 +5,7 @@ export async function getTrendingMovies(page) {
   let movies = [];
   for (let i = page; i <= page + 2; i++) {
     let { data } = await http.get(
-      `https://api.themoviedba.org/3/trending/movie/week?api_key=${process.env.NEXT_PUBLIC_MOVIES_DB_API_KEY}&page=${i}&include_adult=false`
+      `https://api.themoviedb.org/3/trending/movie/week?api_key=${process.env.NEXT_PUBLIC_MOVIES_DB_API_KEY}&page=${i}&include_adult=false`
     );
     const results = data.results;
     results.map((movie) => {
@@ -41,18 +41,18 @@ export async function getMovies(page, genreId, sortBy) {
 }
 
 export async function textSearchMovies(query) {
-  let { data } = await http.get(
+  const { data, status } = await http.get(
     `http://api.themoviedb.org/3/search/movie?api_key=${process.env.NEXT_PUBLIC_MOVIES_DB_API_KEY}&query=${query}&include_adult=false`
   );
 
   let moviesArray = data.results;
 
   // Only Show movies have a vote count higher that 300
-  const movies = moviesArray.filter((movie) => {
+  const searchResults = moviesArray.filter((movie) => {
     return movie.vote_count > 300;
   });
 
-  return movies;
+  return { searchResults, status };
 }
 
 export async function getVideoObject(id) {
