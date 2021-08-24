@@ -5,6 +5,9 @@ import { useRouter } from "next/router";
 import AppContext from "../context/appContext";
 import { getGenres } from "./api/genres";
 import { getMovies, getTrendingMovies, textSearchMovies } from "./api/movies";
+import logger from "../pages/api/logger";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { GlobalStyle } from "../globalStyle";
 import styled, { ThemeProvider } from "styled-components";
 import { isArrayEmpty } from "../components/common/utils/isEmpty";
@@ -14,6 +17,8 @@ const theme = {
     primary: "#0070f3",
   },
 };
+
+logger.init();
 
 export default function MyApp({
   Component,
@@ -41,23 +46,31 @@ export default function MyApp({
   const [noSearchResult, setNoSearchResult] = useState(false);
   const [infiniteScroll, setInfiniteScroll] = useState(false);
   const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const lsFavouriteMovies = window.localStorage.getItem("favouriteMovies");
-    lsFavouriteMovies;
+
     if (lsFavouriteMovies) {
-      setFavouriteMovies(JSON.parse(lsFavouriteMovies));
-      setinitialFavouriteMovies(JSON.parse(lsFavouriteMovies));
+      const favMovies = JSON.parse(lsFavouriteMovies);
+      // by default fav movies are filtered in alphabetical order.
+      const filteredFavMovies = titleFilter(favMovies);
+      setFavouriteMovies(filteredFavMovies);
+      setinitialFavouriteMovies(filteredFavMovies);
     }
 
-    const removeDocumentaries = allGenres.filter(
-      (genre) => genre.name !== "Documentary"
-    );
-    const updatedGenres = [{ id: null, name: "All" }, ...removeDocumentaries];
+    if (allGenres && allTrendingMovies) {
+      const removeDocumentaries = allGenres.filter(
+        (genre) => genre.name !== "Documentary"
+      );
+      const updatedGenres = [{ id: null, name: "All" }, ...removeDocumentaries];
 
-    setGenres(updatedGenres);
+      setGenres(updatedGenres);
 
-    setMovies(allTrendingMovies);
+      setMovies(allTrendingMovies);
+    } else {
+      toast.error("An unexpected error has occurred");
+    }
   }, []);
 
   useEffect(() => {
@@ -151,6 +164,8 @@ export default function MyApp({
         setMovies(response);
       }
       setStatus("resolved");
+    } else {
+      toast.error("An unexpected error has occurred");
     }
   };
 
@@ -181,17 +196,29 @@ export default function MyApp({
       // movies are reset to empty to allow for animation
       if (pathname === "/favourites" || pathname === "/favourites/[id]") {
         setFavouriteMovies([]);
-        setFavouriteMovies(filteredMovies);
+        const finalFavMovies = searching
+          ? handleSearchFilter(filteredMovies, searchQuery)
+          : filteredMovies;
+        setFavouriteMovies(finalFavMovies);
       } else {
         setMovies([]);
-        setMovies(filteredMovies);
+        const finalMovies = searching
+          ? handleSearchFilter(filteredMovies, searchQuery)
+          : filteredMovies;
+        setMovies(finalMovies);
       }
     } else if (pathname === "/favourites" || pathname === "/favourites/[id]") {
       setFavouriteMovies([]);
-      setFavouriteMovies(initialFavouriteMovies);
+      const finalFavMovies = searching
+        ? handleSearchFilter(initialFavouriteMovies, searchQuery)
+        : initialFavouriteMovies;
+      setFavouriteMovies(finalFavMovies);
     } else {
       setMovies([]);
-      setMovies(initialSearchResultMovies);
+      const finalMovies = searching
+        ? handleSearchFilter(initialSearchResultMovies, searchQuery)
+        : initialSearchResultMovies;
+      setMovies(finalMovies);
     }
   };
 
@@ -265,9 +292,7 @@ export default function MyApp({
 
     const moviesClone = favouritesRoute ? [...favouriteMovies] : [...movies];
 
-    const filteredMovies = moviesClone.sort((a, b) => {
-      return a.title.localeCompare(b.title);
-    });
+    const filteredMovies = titleFilter(moviesClone);
 
     // movies are reset to empty to allow for animation
     if (favouritesRoute) {
@@ -277,6 +302,14 @@ export default function MyApp({
       setMovies([]);
       setMovies(filteredMovies);
     }
+  };
+
+  const titleFilter = (array) => {
+    // removed this the title function as I needed the sort results return in another function instead of setting state
+    const filteredArray = array.sort((a, b) => {
+      return a.title.localeCompare(b.title);
+    });
+    return filteredArray;
   };
 
   // ------------------------ Movie Item ------------------------ //
@@ -337,46 +370,59 @@ export default function MyApp({
   const handleSearch = async (query) => {
     infiniteScroll && resetInfiniteScroll();
     setSearching(true);
+    setSearchQuery(query);
     pathname !== "/" && pathname !== "/favourites" && push("/");
     if (pathname === "/favourites") {
       handleFavouritesSearch(query);
     } else {
       setStatus("pending");
-      const response = await textSearchMovies(query);
-      if (isArrayEmpty(response)) {
+      const { searchResults, status } = await textSearchMovies(query);
+
+      if (isArrayEmpty(searchResults)) {
         setNoSearchResult(false);
+        // search results are by default sorted by title
+        const filteredMovies = titleFilter(searchResults);
         setMovies([]);
-        setMovies(response);
-        setInitialSearchResultMovies(response);
+        setMovies(filteredMovies);
+        setInitialSearchResultMovies(filteredMovies);
         setStatus("resolved");
       } else {
         // used to display a message saying 'no movies found' for a search result instead of a loading spinner
         setNoSearchResult(true);
       }
+      status !== 200 && toast.error("An unexpected error has occurred");
     }
   };
 
   const handleFavouritesSearch = (query) => {
-    if (isArrayEmpty(favouriteMovies)) {
-      const cleanQuery = query.toLowerCase().trim();
+    if (isArrayEmpty(initialFavouriteMovies)) {
+      const searchedFavMovies = handleSearchFilter(
+        initialFavouriteMovies,
+        query
+      );
 
-      const searchedFavMovies = favouriteMovies.filter((movie) => {
-        return (
-          movie.title.toLowerCase().startsWith(cleanQuery) ||
-          movie.title.toLowerCase().includes(cleanQuery)
-        );
-      });
-
-      setMovies(searchedFavMovies);
+      setFavouriteMovies(searchedFavMovies);
     }
   };
 
-  const clearSearchResults = () => {
+  const handleSearchFilter = (array, query) => {
+    // search results seperated
+    const cleanQuery = query.toLowerCase().trim();
+    const searchResults = array.filter((movie) => {
+      return (
+        movie.title.toLowerCase().startsWith(cleanQuery) ||
+        movie.title.toLowerCase().includes(cleanQuery)
+      );
+    });
+    return searchResults;
+  };
+
+  const clearSearchResults = (newSelectedGenre, newSelectedSortyBy) => {
     if (searching) {
       if (pathname === "/favourites") {
-        setMovies(favouriteMovies);
+        setFavouriteMovies(initialFavouriteMovies);
       } else if (pathname === "/") {
-        handleGetMovies(selectedGenre, selectedSortBy);
+        handleGetMovies(newSelectedGenre, newSelectedSortyBy);
       }
     }
   };
@@ -415,6 +461,7 @@ export default function MyApp({
       }}
     >
       <Container ref={ref}>
+        <ToastContainer position="bottom-right" />
         <Header
           genres={genres}
           handleSearch={handleSearch}

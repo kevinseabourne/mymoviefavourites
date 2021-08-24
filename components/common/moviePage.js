@@ -85,6 +85,12 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
     setShowOverlay(false);
   };
 
+  const handleExit = () => {
+    if (pathname === "/favourites/[id]") {
+      push("/favourites", { query: "favourites" });
+    }
+  };
+
   const containerAnimation = {
     hidden: {
       opacity: 0,
@@ -168,7 +174,7 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
     <Container>
       <GlobalStyle showOverlay={showOverlay} />
       <Link href={pathname === "/favourites/[id]" ? "/favourites" : "/"}>
-        <ExitButton>
+        <ExitButton onClick={() => handleExit}>
           <ImageLoader
             src={crossIcon}
             width="30px"
