@@ -69,7 +69,9 @@ export default function MyApp({
 
       setMovies(allTrendingMovies);
     } else {
-      toast.error("An unexpected error has occurred");
+      toast.error("An unexpected error has occurred", {
+        position: "bottom-right",
+      });
     }
   }, []);
 
@@ -165,7 +167,9 @@ export default function MyApp({
       }
       setStatus("resolved");
     } else {
-      toast.error("An unexpected error has occurred");
+      toast.error("An unexpected error has occurred", {
+        position: "bottom-right",
+      });
     }
   };
 
@@ -390,7 +394,10 @@ export default function MyApp({
         // used to display a message saying 'no movies found' for a search result instead of a loading spinner
         setNoSearchResult(true);
       }
-      status !== 200 && toast.error("An unexpected error has occurred");
+      status !== 200 &&
+        toast.error("An unexpected error has occurred", {
+          position: "bottom-right",
+        });
     }
   };
 
@@ -461,7 +468,7 @@ export default function MyApp({
       }}
     >
       <Container ref={ref}>
-        <ToastContainer position="bottom-right" />
+        <ToastContainer />
         <Header
           genres={genres}
           handleSearch={handleSearch}
