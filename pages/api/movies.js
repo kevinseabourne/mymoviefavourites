@@ -42,7 +42,7 @@ export async function getMovies(page, genreId, sortBy) {
 
 export async function textSearchMovies(query) {
   const { data, status } = await http.get(
-    `http://api.themoviedb.org/3/search/movie?api_key=${process.env.NEXT_PUBLIC_MOVIES_DB_API_KEY}&query=${query}&include_adult=false`
+    `https://api.themoviedb.org/3/search/movie?api_key=${process.env.NEXT_PUBLIC_MOVIES_DB_API_KEY}&query=${query}&include_adult=false`
   );
 
   let moviesArray = data.results;
@@ -57,7 +57,7 @@ export async function textSearchMovies(query) {
 
 export async function getVideoObject(id) {
   let { data: videoObj } = await http.get(
-    `http://api.themoviedb.org/3/movie/${id}/videos?api_key=${process.env.NEXT_PUBLIC_MOVIES_DB_API_KEY}`
+    `https://api.themoviedb.org/3/movie/${id}/videos?api_key=${process.env.NEXT_PUBLIC_MOVIES_DB_API_KEY}`
   );
   // This is adding a property to each movie object.
   const movies = videoObj;
