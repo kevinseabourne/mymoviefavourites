@@ -10,6 +10,7 @@ const Input = ({
   inputOpen,
   searchInputValue,
   onClick,
+  onFocus,
   clearInputAndFocus,
   register,
 }) => {
@@ -34,7 +35,7 @@ const Input = ({
       <SearchIconContainer
         inputOpen={inputOpen}
         onClick={onClick}
-        onFocus={onClick}
+        onFocus={onFocus}
         tabIndex="0"
       >
         <ImageLoader
@@ -93,6 +94,9 @@ const InputContainer = styled.div`
   width: 100%;
   max-width: 300px;
   position: relative;
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
 `;
 
 const SearchIconContainer = styled.div`
@@ -141,6 +145,9 @@ const RealInput = styled.input`
   transition: all 0.3s;
   @media (max-width: 1024px) {
     height: 32px;
+  }
+  &:focus:not(:focus-visible) {
+    outline: none;
   }
 `;
 

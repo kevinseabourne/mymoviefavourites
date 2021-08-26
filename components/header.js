@@ -410,6 +410,7 @@ const Header = ({
             name="search"
             inputOpen={inputOpen}
             onClick={handleInputOpen}
+            onFocus={handleInputOpen}
             searchInputValue={searchInputValue}
             register={register}
             clearInputAndFocus={clearInputAndFocus}
