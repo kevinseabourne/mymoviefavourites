@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useLayoutEffect, useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { motion } from "framer-motion";
@@ -21,6 +21,9 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
   const [noTrailer, setNoTrailer] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
   const [movieInFavourites, setMovieInFavourites] = useState(false);
+  const [width, setWidth] = useState(null);
+
+  const ref = React.useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,6 +53,15 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
   useEffect(() => {
     !isObjEmpty(selectedMovie) && checkMovieFavourites(selectedMovie);
   }, [favouriteMovies]);
+
+  useLayoutEffect(() => {
+    if (!ref.current) return;
+
+    const browserWidth = ref.current.offsetWidth;
+    if (browserWidth !== width) {
+      setWidth(browserWidth);
+    }
+  });
 
   const checkMovieFavourites = (selected) => {
     // check if the movie in the favourites
@@ -137,7 +149,7 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
   const fadeAnimation = {
     hidden: {
       opacity: 0,
-      x: 100,
+      x: width <= 1024 ? -100 : 100,
     },
     show: {
       opacity: 1,
@@ -152,7 +164,7 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
   const buttonAnimation = {
     hidden: {
       opacity: 0,
-      x: 100,
+      x: width <= 1024 ? -100 : 100,
     },
     show: {
       opacity: 0.79,
@@ -171,7 +183,7 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
   return isObjEmpty(selectedMovie) ? (
     <LoadingSpinner ref={loadingSpinnerRef} />
   ) : (
-    <Container>
+    <Container ref={ref}>
       <GlobalStyle showOverlay={showOverlay} />
       <Link href={pathname === "/favourites/[id]" ? "/favourites" : "/"}>
         <ExitButton onClick={() => handleExit}>
@@ -192,7 +204,7 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
         <ImageContainer variants={imageAnimation}>
           <ImageLoader
             src={"https://image.tmdb.org/t/p/w780/" + selectedMovie.poster_path}
-            maxWidth="750px"
+            maxWidth="100%"
             alt={selectedMovie.title}
             borderRadius={"10px"}
             placeholderSize={"150%"}
@@ -252,6 +264,7 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
                   />
                 </StarRating>
               </InfoBar>
+
               <Description variants={fadeAnimation}>
                 {selectedMovie.overview}
               </Description>
@@ -357,7 +370,7 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const Container = styled.div`
+const Container = styled(motion.div)`
   min-height: calc(100vh - 93px);
   width: 100%;
   display: flex;
@@ -402,10 +415,20 @@ const MovieContainer = styled(motion.div)`
     grid-auto-flow: column;
     grid-template-columns: minmax(1px, 526px);
     grid-template-rows: 1fr auto;
+    animation: none;
+
+}
   }
 `;
 
-const ImageContainer = styled(motion.div)``;
+const ImageContainer = styled(motion.div)`
+  width: 100%;
+  max-width: calc(100% - 80px);
+  margin: auto;
+  @media (max-width: 632px) {
+    max-width: 100%;
+  }
+`;
 
 const InfoContainer = styled(motion.div)`
   display: flex;
@@ -451,7 +474,7 @@ const Title = styled(motion.div)`
   color: white;
 
   @media (max-width: 1380px) {
-    font-size: 3rem;
+    font-size: 2.25rem;
   }
   @media (max-width: 1024px) {
     align-self: center;
@@ -475,7 +498,7 @@ const InfoBar = styled(motion.div)`
   margin-top: 10px;
   margin-bottom: 10px;
   @media (max-width: 1380px) {
-    font-size: 1.04em;
+    font-size: 1em;
   }
   @media (max-width: 1024px) {
     box-sizing: border-box;
@@ -571,10 +594,11 @@ const Description = styled(motion.p)`
   font-size: 1.2em;
   font-weight: 500;
   margin-top: 0;
+  width: 100%;
   line-height: 1.7;
   margin-top: 15px;
   @media (max-width: 1380px) {
-    font-size: 1.12em;
+    font-size: 1em;
   }
   @media (max-width: 1024px) {
     margin: auto;
