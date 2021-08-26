@@ -21,8 +21,6 @@ const VideoLoader = ({
   hoverColor,
   centerVideo,
 }) => {
-  // Cypress Testing Coverage //
-  /* istanbul ignore file */
   const [isLoaded, setIsLoaded] = useState(false);
   const timeout = useRef(null);
 

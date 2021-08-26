@@ -33,6 +33,10 @@ export default class MyDocument extends Document {
       <Html lang="en">
         <Head>
           <meta
+            http-equiv="Content-Security-Policy"
+            content="upgrade-insecure-requests"
+          />
+          <meta
             name="description"
             content="My Movie Favs | Save the movies you love !"
           />

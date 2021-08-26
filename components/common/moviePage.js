@@ -23,8 +23,6 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
   const [movieInFavourites, setMovieInFavourites] = useState(false);
   const [width, setWidth] = useState(null);
 
-  const ref = React.useRef(null);
-
   useEffect(() => {
     const fetchData = async () => {
       setStatus("pending");
@@ -48,20 +46,15 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
     };
 
     fetchData();
+
+    if (window.innerWidth) {
+      setWidth(window.innerWidth);
+    }
   }, []);
 
   useEffect(() => {
     !isObjEmpty(selectedMovie) && checkMovieFavourites(selectedMovie);
   }, [favouriteMovies]);
-
-  useLayoutEffect(() => {
-    if (!ref.current) return;
-
-    const browserWidth = ref.current.offsetWidth;
-    if (browserWidth !== width) {
-      setWidth(browserWidth);
-    }
-  });
 
   const checkMovieFavourites = (selected) => {
     // check if the movie in the favourites
@@ -183,7 +176,7 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
   return isObjEmpty(selectedMovie) ? (
     <LoadingSpinner ref={loadingSpinnerRef} />
   ) : (
-    <Container ref={ref}>
+    <Container>
       <GlobalStyle showOverlay={showOverlay} />
       <Link href={pathname === "/favourites/[id]" ? "/favourites" : "/"}>
         <ExitButton onClick={() => handleExit}>
@@ -406,18 +399,18 @@ const ExitButton = styled.button`
 
 const MovieContainer = styled(motion.div)`
   display: grid;
-  grid-template-columns: minmax(1px, 600px) minmax(300px, 800px);
+  grid-template-columns: minmax(1px, 700px) minmax(300px, 800px);
   align-items: center;
   padding: 0 5.3%;
+  @media (max-width: 1600px) {
+    grid-template-columns: minmax(1px, 540px) minmax(300px, 800px);
+  }
   @media (max-width: 1024px) {
     margin-top: 0px;
     padding: 20px;
     grid-auto-flow: column;
     grid-template-columns: minmax(1px, 526px);
     grid-template-rows: 1fr auto;
-    animation: none;
-
-}
   }
 `;
 

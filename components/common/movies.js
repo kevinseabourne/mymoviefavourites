@@ -17,7 +17,7 @@ const Movies = ({
   favouriteMovies,
   incrementPage,
 }) => {
-  const { query, pathname, events } = useRouter();
+  const { pathname } = useRouter();
   const loadingSpinnerRef = useRef(null);
   const [animationComplete, setAnimationComplete] = useState(false);
 

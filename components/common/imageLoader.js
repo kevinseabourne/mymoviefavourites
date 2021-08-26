@@ -1,15 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import PropTypes from "prop-types";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { LoadingSpinner } from "./loadingSpinner";
-// import { useInView } from "react-intersection-observer";
-// import "intersection-observer";
 
 const ImageLoader = ({
   src,
-  srcSet,
   width,
   maxWidth,
   placeholderSize,
@@ -17,7 +13,6 @@ const ImageLoader = ({
   alt,
   itemId,
   keyValue,
-  dataTestId,
   onClick,
   borderRadius,
   hover,
