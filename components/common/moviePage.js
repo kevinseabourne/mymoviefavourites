@@ -402,7 +402,7 @@ const MovieContainer = styled(motion.div)`
   grid-template-columns: minmax(1px, 700px) minmax(300px, 800px);
   align-items: center;
   padding: 0 5.3%;
-  @media (max-width: 1600px) {
+  @media (max-width: 1700px) {
     grid-template-columns: minmax(1px, 540px) minmax(300px, 800px);
   }
   @media (max-width: 1024px) {
