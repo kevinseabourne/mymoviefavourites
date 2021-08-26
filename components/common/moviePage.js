@@ -423,7 +423,7 @@ const MovieContainer = styled(motion.div)`
 
 const ImageContainer = styled(motion.div)`
   width: 100%;
-  max-width: calc(100% - 80px);
+  max-width: calc(100% - 93px);
   margin: auto;
   @media (max-width: 632px) {
     max-width: 100%;
