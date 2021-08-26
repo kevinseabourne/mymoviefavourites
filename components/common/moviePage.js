@@ -180,7 +180,9 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
     <Container>
       <DynamicHead
         title={`My Movie Favs | ${selectedMovie.title}`}
-        urlQuery={`/${selectedMovie.title}`}
+        urlQuery={`/${selectedMovie.title
+          .toLowerCase()
+          .replace(/[{L}!#$'"@`#*+)(:;{}\s]/g, "-")}`}
       />
       <GlobalStyle showOverlay={showOverlay} />
       <Link href={pathname === "/favourites/[id]" ? "/favourites" : "/"}>
