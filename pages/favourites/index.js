@@ -18,7 +18,7 @@ const Favourites = () => {
 
   return (
     <Container>
-      <DynamicHead title="My Movie Favs | Favourites" urlQuery="/" />
+      <DynamicHead title="My Movie Favs | Favourites" urlQuery="/favourites" />
       {isArrayEmpty(favouriteMovies) && favouriteMovies.length === 300 && (
         <Title>You have reaching your limit of 300 favourited movies</Title>
       )}

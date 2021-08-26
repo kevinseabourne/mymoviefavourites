@@ -1,10 +1,12 @@
 import styled from "styled-components";
 import Link from "next/link";
+import DynamicHead from "../components/common/dynamicHead";
 
 export default function Custom404() {
   return (
     <Container>
-      <Message>Page not Found</Message>
+      <DynamicHead title="My Movie Favs | Page not found" urlQuery="/404" />
+      <Message>Page not found</Message>
       <Link href="/">
         <ButtonContainer>
           <ButtonTitle>Return Home</ButtonTitle>

@@ -1,5 +1,6 @@
-import React, { useLayoutEffect, useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import DynamicHead from "./dynamicHead";
 import { useRouter } from "next/router";
 import { motion } from "framer-motion";
 import { isArrayEmpty, isObjEmpty } from "./utils/isEmpty";
@@ -177,6 +178,10 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
     <LoadingSpinner ref={loadingSpinnerRef} />
   ) : (
     <Container>
+      <DynamicHead
+        title={`My Movie Favs | ${selectedMovie.title}`}
+        urlQuery={`/${selectedMovie.title}`}
+      />
       <GlobalStyle showOverlay={showOverlay} />
       <Link href={pathname === "/favourites/[id]" ? "/favourites" : "/"}>
         <ExitButton onClick={() => handleExit}>
