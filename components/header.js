@@ -85,7 +85,7 @@ const Header = ({
     }
     if (pathname === "/favourites" && titleSortFavMovies) {
       setSelectedGenre({ id: null, name: "All" });
-      handleGenreFilter({ id: null, name: "All" });
+
       setSelectedSortBy({ query: "title.asc", title: "Title" });
       handleSelectedSortBy({ query: "title.asc", title: "Title" });
       setTitleSortFavMovies(true);
@@ -94,6 +94,7 @@ const Header = ({
     if (pathname === "/") {
       // if a user has selected a filter in the favourites this resets the favourite back to show all.
       handleGenreFilter({ id: null, name: "All" });
+      handleSelectedSortBy({ query: "", title: "Trending" });
     }
   }, [pathname]);
 
@@ -147,40 +148,6 @@ const Header = ({
         push("/");
       }
     }
-
-    // if (pathname === "/about" || pathname === "/404") {
-    //   push("/");
-    // }
-    // setSelectedSortBy(option);
-    //
-    // if (pathname === "/favourites" || pathname === "/favourites/[id]") {
-    //   if (option.title === "Trending" || option.title === "Popular") {
-    //     closeAndClearInput();
-    //     timeout.current = setTimeout(() => {
-    //       push("/");
-    //       handleGetMovies(false, option);
-    //     }, 300);
-    //   }
-    //   push("/favourites");
-    //   handleSelectedSortBy(option);
-    // } else if (searching) {
-    //   if (option.title === "Trending" || option.title === "Popular") {
-    //     closeAndClearInput();
-    //     timeout.current = setTimeout(() => {
-    //       push("/");
-    //       handleGetMovies(false, option);
-    //     }, 300);
-    //   } else {
-    //     push("/");
-    //     handleSelectedSortBy(option);
-    //   }
-    // } else {
-    //   closeAndClearInput();
-    //   timeout.current = setTimeout(() => {
-    //     push("/");
-    //     handleGetMovies(false, option);
-    //   }, 300);
-    // }
   };
 
   const handleFavSortByClick = (option) => {
