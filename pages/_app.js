@@ -217,14 +217,17 @@ export default function MyApp({
         : initialFavouriteMovies;
       setFavouriteMovies(finalFavMovies);
     } else {
-      setMovies([]);
-      const finalMovies = searching
-        ? handleSearchFilter(initialSearchResultMovies, searchQuery)
-        : initialSearchResultMovies;
+      // reset search results to initial search results
+      if (isArrayEmpty(initialSearchResultMovies)) {
+        setMovies([]);
+        const finalMovies = searching
+          ? handleSearchFilter(initialSearchResultMovies, searchQuery)
+          : initialSearchResultMovies;
 
+        setMovies(finalMovies);
+      }
       // reset any filtered favourites to show all favourites
       setFavouriteMovies(initialFavouriteMovies);
-      setMovies(finalMovies);
     }
   };
 
