@@ -174,7 +174,6 @@ export default function MyApp({
   };
 
   // ------------------------ Search Results Filtering & Favourites Filtering ------------------------ //
-
   const handleGenreFilter = (newSelectedGenre) => {
     infiniteScroll && resetInfiniteScroll();
     setSelectedGenre(newSelectedGenre);
@@ -222,6 +221,9 @@ export default function MyApp({
       const finalMovies = searching
         ? handleSearchFilter(initialSearchResultMovies, searchQuery)
         : initialSearchResultMovies;
+
+      // reset any filtered favourites to show all favourites
+      setFavouriteMovies(initialFavouriteMovies);
       setMovies(finalMovies);
     }
   };
