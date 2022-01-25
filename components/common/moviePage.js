@@ -193,6 +193,7 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
             placeholderSize="100%"
             alt="cross-icon"
             hover={true}
+            priority={true}
           />
         </ExitButton>
       </Link>
@@ -212,6 +213,7 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
             opacity={0}
             boxShadow="rgba(0, 0, 0, 0.35) 0px 5px 15px;"
             loadingSpinner={true}
+            priority={true}
           />
         </ImageContainer>
         <InfoContainer variants={infoAnimation}>
@@ -292,6 +294,7 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
                       placeholderSize="100%"
                       alt="exit"
                       hover={true}
+                      priority={true}
                     />
                   </ResponsiveExitButton>
                 </Link>
@@ -316,6 +319,7 @@ const MoviePage = ({ handleFavouriteSelected, favouriteMovies }) => {
                           movieInFavourites
                         );
                       }}
+                      priority={true}
                     />
                   </FavouriteIcon>
                   <FavouritesButtonLabel>
@@ -562,6 +566,7 @@ const MovieDBLink = styled(motion.a)`
 `;
 
 const StarRating = styled(motion.div)`
+  width: 150px;
   font-size: 22px;
   margin-left: 38px;
   white-space: nowrap;
