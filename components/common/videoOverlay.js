@@ -96,18 +96,6 @@ const VideoOverlay = ({
 
 export default VideoOverlay;
 
-// VideoOverlay.propTypes = {
-//   showOverlay: PropTypes.bool,
-//   closeOverlay: PropTypes.func,
-//   src: PropTypes.string.isRequired,
-//   maxWidth: PropTypes.string,
-//   width: PropTypes.string,
-//   alt: PropTypes.string.isRequired,
-//   borderRadius: PropTypes.string,
-//   placeholderSize: PropTypes.string,
-//   centerVideo: PropTypes.bool,
-// };
-
 const GlobalStyle = createGlobalStyle`
  body {
    overflow: ${({ showOverlay }) => (showOverlay ? "hidden" : "scroll")};

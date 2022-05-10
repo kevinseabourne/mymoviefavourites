@@ -7,7 +7,12 @@ import styled from "styled-components";
 import { LoadingSpinner } from "../../components/common/loadingSpinner";
 
 const Favourites = () => {
-  const { status, favouriteMovies, selectedGenre } = useContext(AppContext);
+  const {
+    status,
+    favouriteMovies,
+    setFavouriteMovies,
+    selectedGenre,
+  } = useContext(AppContext);
 
   const loadingSpinnerRef = useRef(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -26,6 +31,7 @@ const Favourites = () => {
         <Movies
           movies={favouriteMovies}
           favouriteMovies={favouriteMovies}
+          setFavouriteMovies={setFavouriteMovies}
           status={status}
         />
       ) : isMounted ? (

@@ -1,5 +1,4 @@
 import http from "./httpService";
-import { removeDuplicateObjectFromArray } from "../../components/common/utils/removeDupObjs";
 
 export async function getTrendingMovies(page) {
   let movies = [];
@@ -18,8 +17,7 @@ export async function getTrendingMovies(page) {
     return movie.vote_average !== 0;
   });
 
-  const removedDupMovies = removeDuplicateObjectFromArray(filteredMovies, "id");
-  return removedDupMovies;
+  return filteredMovies;
 }
 
 export async function getMovies(page, genreId, sortBy) {
@@ -36,8 +34,7 @@ export async function getMovies(page, genreId, sortBy) {
     });
   }
 
-  const removedDupMovies = removeDuplicateObjectFromArray(movies, "id");
-  return removedDupMovies;
+  return movies;
 }
 
 export async function textSearchMovies(query) {
