@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { useState, useEffect, useRef } from "react";
-import styled, { keyframes } from "styled-components";
+import styled, { keyframes, createGlobalStyle } from "styled-components";
 import { useForm } from "react-hook-form";
 import Input from "./common/input";
 import ResponsiveHeader from "./responsiveHeader";
@@ -14,9 +14,11 @@ const Header = ({
   handleGenreFilter,
   handleSelectedSortBy,
   handleSearch,
+  handleSearching,
   genres,
   searching,
   clearSearchResults,
+  clearSearch,
 }) => {
   const router = useRouter();
   const { push, pathname } = router;
@@ -34,7 +36,7 @@ const Header = ({
     query: "",
     title: "Trending",
   });
-  const [sortByOptions] = useState([
+  const [sortByOptions, setSortByOptions] = useState([
     { query: "", title: "Trending" },
     { query: "popular", title: "Popular" },
     { query: "vote_average.desc", title: "Top Rated" },
@@ -66,35 +68,72 @@ const Header = ({
   }, []);
 
   useEffect(() => {
+    const lsMovieContentPage = window.localStorage.getItem("movieContentPage");
+
+    let movieContentPage = "";
+    if (lsMovieContentPage) {
+      movieContentPage = JSON.parse(lsMovieContentPage);
+    }
+
+    if (pathname === "/") {
+      setTitleSortSearchedMovies(true);
+    }
     if (pathname === "/[id]") {
       setTitleSortSearchedMovies(false);
     }
-    if (searching && titleSortSearchedMovies && pathname === "/") {
-      // have the search results sort in alphabetical order
+    if (
+      searching &&
+      titleSortSearchedMovies &&
+      pathname === "/" &&
+      movieContentPage !== "/favourites/[id]"
+    ) {
       setSelectedGenre({ id: null, name: "All" });
-      setSelectedSortBy({ query: "title.asc", title: "Title" });
-      handleSelectedSortBy({ query: "title.asc", title: "Title" });
+      setSelectedSortBy({ query: "", title: "Order" });
+      handleSelectedSortBy({ query: "", title: "Order" });
+
       setTitleSortSearchedMovies(true);
     }
   }, [searching, pathname]);
 
   useEffect(() => {
-    // when on the favourites page by default have the movies sort in alphabetical order
+    const lsMovieContentPage = window.localStorage.getItem("movieContentPage");
+
+    let movieContentPage = "";
+    if (lsMovieContentPage) {
+      movieContentPage = JSON.parse(lsMovieContentPage);
+    }
+
     if (pathname === "/favourites/[id]") {
       setTitleSortFavMovies(false);
     }
-    if (pathname === "/favourites" && titleSortFavMovies) {
+    if (
+      pathname === "/favourites" &&
+      titleSortSearchedMovies &&
+      movieContentPage !== "/favourites/[id]"
+    ) {
       setSelectedGenre({ id: null, name: "All" });
 
-      setSelectedSortBy({ query: "title.asc", title: "Title" });
-      handleSelectedSortBy({ query: "title.asc", title: "Title" });
+      setSelectedSortBy({ query: "", title: "Order" });
+      handleSelectedSortBy({ query: "", title: "Order" });
+
       setTitleSortFavMovies(true);
     }
 
-    if (pathname === "/") {
-      // if a user has selected a filter in the favourites this resets the favourite back to show all.
-      handleGenreFilter({ id: null, name: "All" });
-      handleSelectedSortBy({ query: "", title: "Trending" });
+    // add the order option to the sortBy dropdown when on the favourites or favourites id page and remove it if not.
+    if (pathname === "/favourites" || pathname === "/favourites/[id]") {
+      const orderOptionPresent = sortByOptions.find(
+        (obj) => obj.title === "Order"
+      );
+
+      if (!orderOptionPresent) {
+        setSortByOptions([...sortByOptions, { query: "", title: "Order" }]);
+      }
+    } else {
+      const sortByOptionsClone = [...sortByOptions];
+      const updatedSortByOptions = sortByOptionsClone.filter(
+        (option) => option.title !== "Order"
+      );
+      setSortByOptions(updatedSortByOptions);
     }
   }, [pathname]);
 
@@ -108,8 +147,6 @@ const Header = ({
   // ------------------------ dropdown menu's ------------------------ //
 
   const handleGenreClick = (genre) => {
-    // ------------------------ Bug Fixed ------------------------ //
-    // Fixed a bug that when you were searching
     setSelectedGenre(genre);
 
     if (searching) {
@@ -137,8 +174,17 @@ const Header = ({
       if (pathname === "/favourites" || pathname === "/favourites/[id]") {
         handleFavSortByClick(option);
       } else {
-        handleSelectedSortBy(option);
-        push("/");
+        if (option.title === "Trending" || option.title === "Popular") {
+          closeAndClearInput();
+          timeout.current = setTimeout(() => {
+            // allowing the input animation to complete prevent a glitch.
+            handleSelectedSortBy(option);
+            push("/");
+          }, 300);
+        } else {
+          handleSelectedSortBy(option);
+          push("/");
+        }
       }
     } else {
       if (pathname === "/favourites" || pathname === "/favourites/[id]") {
@@ -152,6 +198,7 @@ const Header = ({
 
   const handleFavSortByClick = (option) => {
     if (option.title === "Trending" || option.title === "Popular") {
+      closeAndClearInput();
       handleGetMovies(false, option);
       push("/");
     } else {
@@ -180,6 +227,10 @@ const Header = ({
   const onSubmit = (query) => {
     const { search } = query;
 
+    if (pathname === "/") {
+      setSelectedSortBy({ query: "title.asc", title: "Title" });
+    }
+
     if (searching && selectedGenre.name !== "All") {
       setSelectedGenre({
         id: null,
@@ -205,7 +256,7 @@ const Header = ({
         });
         setSelectedSortBy(
           pathname === "/favourites"
-            ? { query: "title.asc", title: "Title" }
+            ? { query: "", title: "Order" }
             : { query: "", title: "Trending" }
         );
 
@@ -216,7 +267,7 @@ const Header = ({
               name: "All",
             },
             pathname === "/favourites"
-              ? { query: "title.asc", title: "Title" }
+              ? { query: "", title: "Order" }
               : { query: "", title: "Trending" }
           );
         }, 300);
@@ -240,28 +291,19 @@ const Header = ({
   const closeAndClearInput = () => {
     setInputOpen(false);
     setValue("search", "");
+    clearSearch();
   };
 
   // ------------------------ Return to homepage ------------------------ //
 
   const handleReturnHomeAndRest = () => {
-    // also if searching is true then do
     // the function reset the dropdown setting back to default and changes route to the home page
-    if (selectedSortBy !== "Trending" || searching) {
-      // No need to call handleGenreBy because doing will make the same http request handleSelectedSortBy("All") is doing
-      // handleSelectedGenre({ id: null, name: "All" });
-      // handleSelectedSortBy("Trending");
-    }
-    closeAndClearInput();
+
     setSelectedGenre({ id: null, name: "All" });
     setSelectedSortBy({ query: "", title: "Trending" });
 
-    // ------------------------ Bug Fixed ------------------------ //
-    // * If a genre was selected which was not 'All' and then you pressed either home button
-    //   it would display trending movies but not 'All', to prevent this I changed the first argument below from false to
-    //   the 'All' genre object.
-
     // timeout to allow for input exit animation to not lag
+
     timeout.current = setTimeout(() => {
       handleGetMovies(
         { query: null, title: "All" },
@@ -269,6 +311,7 @@ const Header = ({
       );
       push("/");
     }, 300);
+    closeAndClearInput();
   };
 
   // ------------------------ favourite & About Links ------------------------ //
@@ -280,6 +323,10 @@ const Header = ({
 
   return (
     <Container>
+      <GlobalStyle
+        genreDropdownOpen={genreDropdownOpen}
+        sortByDropdownOpen={sortByDropdownOpen}
+      />
       <SkipHeaderLink
         href="#main"
         onFocus={() => {
@@ -314,7 +361,7 @@ const Header = ({
             />
           </CarrotIconContainer>
           {genreDropdownOpen && (
-            <Dropdown>
+            <Dropdown responsiveHeight="61.2vh">
               {genres.map((genre) => (
                 <DropdownItem
                   key={genre.id}
@@ -348,7 +395,7 @@ const Header = ({
           </CarrotIconContainer>
 
           {sortByDropdownOpen && (
-            <Dropdown>
+            <Dropdown responsiveHeight="22vh">
               {sortByOptions.map((option) => (
                 <DropdownItem
                   key={sortByOptions.indexOf(option)}
@@ -432,6 +479,18 @@ const Header = ({
 
 export default Header;
 
+const GlobalStyle = createGlobalStyle`
+ body {
+   overflow: ${({ genreDropdownOpen, sortByDropdownOpen }) =>
+     genreDropdownOpen
+       ? "hidden !important"
+       : sortByDropdownOpen
+       ? "hidden !important"
+       : "scroll"};
+   overscroll-behavior: none;
+  }
+`;
+
 const Container = styled.div`
   width: 100%;
   position: relative;
@@ -454,7 +513,7 @@ const SkipHeaderLink = styled.a`
   padding: 16px 24px;
   position: absolute;
   top: 110px;
-  left: ${({ showSkipLink }) => (showSkipLink ? "30px" : "-100px")};
+  left: ${({ showSkipLink }) => (showSkipLink ? "30px" : "-500px")};
   font-size: 1rem;
   border-radius: 9px;
   background-color: white;
@@ -578,6 +637,7 @@ const Dropdown = styled.div`
   position: absolute;
   background-color: #17181b;
   margin-top: 14px;
+  overflow: scroll;
   min-width: 190px;
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
@@ -585,6 +645,9 @@ const Dropdown = styled.div`
   box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px,
     rgba(0, 0, 0, 0.22) 0px 10px 10px;
   z-index: 10;
+  @media (max-height: 850px) {
+    height: ${({ responsiveHeight }) => responsiveHeight};
+  }
 `;
 
 const DropdownItem = styled.div`
