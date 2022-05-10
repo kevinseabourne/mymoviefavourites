@@ -12,7 +12,7 @@ This website displays data from the moviesDB API. Allowing you to search and fil
 • Framer Motion
 • React Hook Form
 
-## Stack
+## Features
 
 • Http Requests
 • Filter Data
