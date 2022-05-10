@@ -1,50 +1,23 @@
-# My Movie Favs
+# Movie Database Website
 
-Search for movies, save your favourites and watch trailers
+My choice for creating this website was too demonstrate being able to make http request's to an api. Displaying the data, allowing the user to filter and search through the data. The design is a recreation based on the popular movie torrenting application popcorn time.
 
-<details>
-<summary>Click to expand workaround example</summary>
-<br />
+## Stack
 
-**components/StyledLink.js**
+• Next.js
+• Javascript
+• Styled Components
+• MoviesDB API
+• Axios
+• Framer Motion
+• React Hook Form
 
-```javascript
-import Link from "next/link";
-import styled from "styled-components";
+## Stack
 
-const StyledLink = ({ as, children, className, href }) => (
-  <Link href={href} as={as} passHref>
-    <a className={className}>{children}</a>
-  </Link>
-);
-
-export default styled(StyledLink)`
-  color: #0075e0;
-  text-decoration: none;
-  transition: all 0.2s ease-in-out;
-
-  &:hover {
-    color: #40a9ff;
-  }
-
-  &:focus {
-    color: #40a9ff;
-    outline: none;
-    border: 0;
-  }
-`;
-```
-
-**pages/index.js**
-
-```javascript
-import StyledLink from "../components/StyledLink";
-
-export default () => (
-  <StyledLink href="/post/[pid]" forwardedAs="/post/abc">
-    First post
-  </StyledLink>
-);
-```
-
-</details>
+• Http Requests
+• Filter Data
+• Search Through Data
+• Add Movies To Favourites
+• Infinite Scroll
+• Responsive
+• Accessibility
