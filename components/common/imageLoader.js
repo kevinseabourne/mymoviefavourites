@@ -16,6 +16,7 @@ const ImageLoader = ({
   onClick,
   borderRadius,
   hover,
+  grab,
   duration,
   boxShadow,
   loadingSpinner,
@@ -89,6 +90,7 @@ const ImageLoader = ({
         borderRadius={borderRadius}
         width={width}
         hover={hover}
+        grab={grab}
         maxWidth={maxWidth}
         centerImage={centerImage}
         variants={animation}
@@ -152,7 +154,8 @@ const ImageContainer = styled(motion.div)`
   border-radius: ${({ borderRadius }) => (borderRadius ? borderRadius : "0px")};
   overflow: ${({ src }) => (src ? "default" : "hidden")};
   &:hover {
-    cursor: ${({ hover }) => (hover ? "pointer" : "default")};
+    cursor: ${({ hover, grab }) =>
+      hover ? "pointer" : grab ? "grab" : "default"};
   }
 `;
 

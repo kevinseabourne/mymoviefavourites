@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import styled from "styled-components";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  Reorder,
+  useDragControls,
+} from "framer-motion";
 import { isArrayEmpty } from "./utils/isEmpty";
 import MovieItem from "./movieItem.js";
 import { LoadingSpinner } from "./loadingSpinner";
@@ -15,18 +20,23 @@ const Movies = ({
   searching,
   infiniteScroll,
   favouriteMovies,
+  setFavouriteMovies,
   incrementPage,
 }) => {
   const { pathname } = useRouter();
   const loadingSpinnerRef = useRef(null);
   const [animationComplete, setAnimationComplete] = useState(false);
 
+  const controls = useDragControls();
+
+  // ref for loading icon
   const { ref, inView } = useInView({
     rootMargin: "0px 0px",
   });
 
   useEffect(() => {
     // infinite Scroll
+    // get more movies when the loading item is in view
     if (inView && status !== "pending") {
       incrementPage();
     }
@@ -40,7 +50,7 @@ const Movies = ({
       opacity: 1,
       transition: {
         type: "spring",
-        staggerChildren: 0.1,
+        staggerChildren: 0.15,
       },
     },
   };
@@ -68,20 +78,27 @@ const Movies = ({
 
   return renderCondition ? (
     <Container>
-      <MoviesContainer
+      <Reorder.Group
         variants={moviesAnimation}
         initial="hidden"
         animate="show"
         onAnimationComplete={() => setAnimationComplete(true)}
+        as={MoviesContainer}
+        onReorder={setFavouriteMovies}
+        values={movies}
+        dragControls={controls}
+        layoutScroll
+        style={{ overflowY: "scroll" }}
       >
-        {movies.map((movie, index) => (
+        {movies.map((movie) => (
           <MovieItem
             movie={movie}
-            key={index}
+            key={movie.id}
             status={status}
             favouriteMovies={favouriteMovies}
           />
         ))}
+
         <AnimatePresence>
           {infiniteScrollCondition && (
             <LoadingItem
@@ -93,7 +110,7 @@ const Movies = ({
             </LoadingItem>
           )}
         </AnimatePresence>
-      </MoviesContainer>
+      </Reorder.Group>
     </Container>
   ) : noSearchResult ? (
     <Title>Sorry no movies found</Title>
@@ -109,7 +126,7 @@ const Container = styled(motion.div)`
   height: 100%;
 `;
 
-const MoviesContainer = styled(motion.div)`
+const MoviesContainer = styled(motion.ul)`
   display: grid;
   grid-template-columns: repeat(auto-fill, 202px);
   justify-content: space-evenly;

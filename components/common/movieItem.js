@@ -4,19 +4,25 @@ import styled from "styled-components";
 import ImageLoader from "./imageLoader";
 import { isArrayEmpty } from "./utils/isEmpty";
 import { useRouter } from "next/router";
-import { motion } from "framer-motion";
+import { motion, Reorder, useDragControls } from "framer-motion";
 import ReactStars from "react-rating-stars-component";
 
 const MovieItem = ({ movie, status, favouriteMovies }) => {
-  const router = useRouter();
-  const { handleSelectedMovie, handleFavouriteSelected } = useContext(
-    AppContext
-  );
+  const { pathname, push } = useRouter();
+  const {
+    handleSelectedMovie,
+    handleFavouriteSelected,
+    selectedSortBy,
+    selectedGenre,
+    searching,
+  } = useContext(AppContext);
   const imageContainerRef = useRef(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [focus, setFocus] = useState(false);
   const [windowWidth, setWindowWidth] = useState(null);
   const [movieInFavourites, setMovieInFavourites] = useState(false);
+
+  const controls = useDragControls();
 
   const handleImageLoad = () => setImageLoaded(true);
 
@@ -63,14 +69,13 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
 
     if ((windowWidth <= 768 && focus) || windowWidth > 768) {
       handleSelectedMovie(movie);
-      const { push, pathname } = router;
 
       const cleanUpTitle = movie.title
         .toLowerCase()
         .replace(/[{L}!#$'"@`#*+)(:;{}\s]/g, "-");
 
       push(
-        router.pathname === "/favourites" ? "/favourites/[id]" : "/[id]",
+        pathname === "/favourites" ? "/favourites/[id]" : "/[id]",
         `${pathname === "/favourites" ? "/favourites/" : "/"}${cleanUpTitle}`
       );
     }
@@ -79,6 +84,8 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
   const handleFavouriteClick = (movie) => {
     handleFavouriteSelected(movie, movieInFavourites);
   };
+
+  // ------------------------ Animation ------------------------ //
 
   const itemAnimation = {
     hidden: {
@@ -94,21 +101,18 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
   const placeholderAnimation = {
     hidden: {
       backgroundColor: "rgba(18, 18, 18, 0)",
-      border: "3.4px solid rgba(18, 18, 18, 0)",
+      border: "3.4px solid transparent",
       transition: {
         type: "spring",
-        duration: 0.3,
-        bounce: 0,
       },
     },
     hover: {
       cursor: "pointer",
       backgroundColor: "rgba(18, 18, 18, 0.7)",
-      border: "3.4px solid #2d72d9",
+      border: "3.4px solid transparent",
+      // border: "3.4px solid #2d72d9",
       transition: {
         type: "spring",
-        duration: 0.3,
-        bounce: 0,
       },
     },
   };
@@ -130,6 +134,22 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
   const favButtonAnimation = {
     hidden: {
       opacity: 0,
+      scale: 0.8,
+    },
+    hover: {
+      scale: 1,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        bounce: 0,
+      },
+    },
+  };
+
+  const ratingAnimation = {
+    hidden: {
+      opacity: 0,
+      scale: 0.9,
     },
     hover: {
       scale: 1,
@@ -155,8 +175,38 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
     },
   };
 
+  // selectedSortBy is Order
+  const dragCondition =
+    pathname === "/favourites" &&
+    selectedGenre.name === "All" &&
+    selectedSortBy.title === "Order" &&
+    !searching;
+
   return (
-    <Container variants={itemAnimation}>
+    <Reorder.Item
+      as={Container}
+      key={movie.id}
+      value={movie}
+      style={{ listStyle: "none" }}
+      variants={itemAnimation}
+      drag={dragCondition ? true : false}
+      dragControls={controls}
+      dragListener={false}
+      // dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
+      // dragElastic={0}
+      whileHover={{
+        scale: 1.03,
+        transition: {
+          type: "spring",
+        },
+      }}
+      whileFocus={{
+        scale: 1.03,
+        transition: {
+          type: "spring",
+        },
+      }}
+    >
       <ImageContainer
         tabIndex="0"
         onKeyPress={() => {
@@ -167,6 +217,7 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
         variants={placeholderAnimation}
         whileHover={imageLoaded ? "hover" : "hidden"}
         initial="hidden"
+        viewport={{ once: true }}
         animate={imageLoaded && focus ? "hover" : "hidden"}
         onFocus={(e) => e.keycode === 13 && setFocus(true)}
         onBlur={(e) =>
@@ -176,6 +227,22 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
         }
       >
         {imageLoaded && <BackgroundFade variants={hoverInfoAnimation} />}
+        {dragCondition && imageLoaded && (
+          <Drag
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            variants={favButtonAnimation}
+            onPointerDown={(e) => controls.start(e)}
+          >
+            <ImageLoader
+              src="/icons/dragIcon.svg"
+              width="25px"
+              placeholderSize="100%"
+              grab={true}
+            />
+          </Drag>
+        )}
         {imageLoaded && (
           <FavouriteButton
             onClick={(e) => {
@@ -205,13 +272,14 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
           borderRadius="10px"
           placeholderSize="150%"
           opacity={0}
-          boxShadow="0 10px 15px -3px rgba(0, 0, 0, 0.1),
-            0 4px 6px -2px rgba(0, 0, 0, 0.05);"
+          boxShadow="rgba(0, 0, 0, 0.09) 0px 2px 1px, rgba(0, 0, 0, 0.09) 0px 4px 2px, rgba(0, 0, 0, 0.09) 0px 8px 4px, rgba(0, 0, 0, 0.09) 0px 16px 8px, rgba(0, 0, 0, 0.09) 0px 32px 16px;"
+          // boxShadow="0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          //   0 4px 6px -2px rgba(0, 0, 0, 0.05);"
           loadingSpinner={true}
           handleOnLoadOutside={handleImageLoad}
         />
         {imageLoaded && (
-          <MovieRatingContainer variants={hoverInfoAnimation}>
+          <MovieRatingContainer variants={ratingAnimation}>
             <ReactStars
               value={movie.vote_average / 2}
               count={5}
@@ -235,13 +303,13 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
           {movie.release_date ? movie.release_date.substring(0, [4]) : ""}
         </ReleaseDate>
       </InfoContainer>
-    </Container>
+    </Reorder.Item>
   );
 };
 
 export default MovieItem;
 
-const Container = styled(motion.div)`
+const Container = styled(motion.li)`
   border-radius: 10px;
   display: flex;
   flex-direction: column;
@@ -275,11 +343,28 @@ const BackgroundFade = styled(motion.div)`
   z-index: 1;
   border-radius: 10px;
   opacity: 0;
-  background-color: rgba(18, 18, 18, 0.7);
+  background-color: rgba(18, 18, 18, 0.6);
 `;
 
+const Drag = styled(motion.button)`
+  position: absolute;
+  top: 0;
+  z-index: 20;
+  left: 0;
+  cursor: grab !important;
+  padding-top: 12px;
+  padding-bottom: 50px;
+  padding-right: 60px;
+  padding-left: 16px;
+  &:hover {
+    cursor: grab;
+  }
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+`;
 const HeartFilter = styled(motion.div)`
-  transition: 0.3s ease;
+  transition: 0.15s;
   filter: ${({ movieInFavourites }) =>
     movieInFavourites
       ? "invert(28%) sepia(18%) saturate(6055%) hue-rotate(339deg) brightness(98%) contrast(94%);"

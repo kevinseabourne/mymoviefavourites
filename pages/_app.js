@@ -11,6 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { GlobalStyle } from "../globalStyle";
 import styled, { ThemeProvider } from "styled-components";
 import { isArrayEmpty } from "../components/common/utils/isEmpty";
+import { removeDuplicateObjectFromArray } from "../components/common/utils/removeDupObjs";
 
 const theme = {
   colors: {
@@ -47,16 +48,17 @@ export default function MyApp({
   const [infiniteScroll, setInfiniteScroll] = useState(false);
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [favouriteGenreChange, setFavouriteGenreChange] = useState(false);
+  const timeout = useRef(null);
 
   useEffect(() => {
     const lsFavouriteMovies = window.localStorage.getItem("favouriteMovies");
 
     if (lsFavouriteMovies) {
       const favMovies = JSON.parse(lsFavouriteMovies);
-      // by default fav movies are filtered in alphabetical order.
-      const filteredFavMovies = titleFilter(favMovies);
-      setFavouriteMovies(filteredFavMovies);
-      setinitialFavouriteMovies(filteredFavMovies);
+
+      setFavouriteMovies(favMovies);
+      setinitialFavouriteMovies(favMovies);
     }
 
     if (allGenres && allTrendingMovies) {
@@ -73,8 +75,11 @@ export default function MyApp({
         position: "bottom-right",
       });
     }
+
+    () => clearTimeout(timeout);
   }, []);
 
+  // handle infiniteScroll request, fetch more data when the page changes
   useEffect(() => {
     if (page > 1 && infiniteScroll) {
       handleGetMovies(selectedGenre, selectedSortBy);
@@ -87,6 +92,52 @@ export default function MyApp({
       resetInfiniteScroll();
     }
   }, [pathname]);
+
+  // When favourite movies is updated after changing the order of movies with the drag feature
+  // the movies order is then saved in localStorage to preserve the order
+
+  useEffect(() => {
+    if (
+      pathname === "/favourites" &&
+      selectedGenre.name === "All" &&
+      selectedSortBy.title === "Order" &&
+      !searching
+    ) {
+      localStorage.setItem("favouriteMovies", JSON.stringify(favouriteMovies));
+    }
+  }, [favouriteMovies]);
+
+  // ⚡️  Handle sortBy selected after genre change ⚡️  //
+  // On the favourites page when a genre is selected filter the favourite movies to only show those movies
+  // if a sort by is selected which is either 'Top Rated', 'Title' or 'Year' then wait for the genre filtered movies to be
+  // updated then filter those movies based on the selected sortBy.
+
+  useEffect(() => {
+    if (pathname === "/favourites" && favouriteGenreChange) {
+      if (
+        selectedSortBy.title === "Top Rated" ||
+        selectedSortBy.title === "Year" ||
+        selectedSortBy.title === "Title"
+      ) {
+        setFavouriteGenreChange(false);
+        handleSelectedSortBy(selectedSortBy);
+      }
+    } else if (pathname === "/favourites") {
+      setFavouriteGenreChange(false);
+    }
+  }, [favouriteMovies]);
+
+  // ⚡️ Favourites Feature ⚡️ //
+  // This condition is used for the genre and sortBy filters when they are used on the favourites page
+  // When a genre or sortBy is selected then you visit the movie content page this property is truthy
+  // and then when you go back to the favourites page, prevents the genre and sortBy from resetting.
+
+  useEffect(() => {
+    pathname === "/favourites/[id]"
+      ? localStorage.setItem("movieContentPage", JSON.stringify(pathname))
+      : localStorage.setItem("movieContentPage", JSON.stringify(false));
+  }, [pathname]);
+
   // ------------------------ Genre Filter & Sort By ------------------------ //
 
   const handleGenreId = (newSelectedGenre) => {
@@ -131,8 +182,6 @@ export default function MyApp({
 
       pathname !== "/" && push("/");
     }
-    // when a genre is selected in search results of favourites then you return to home it is not
-    // resetting the genre to all
     if (
       selectedGenre.name === "All" &&
       newSelectedSortBy.title === "Trending"
@@ -160,7 +209,13 @@ export default function MyApp({
         newSelectedGenre.name === selectedGenre.name &&
         newSelectedSortBy.title === selectedSortBy.title
       ) {
-        setMovies([...movies, ...response]);
+        const addedMovies = [...movies, ...response];
+        const removedDupMovies = removeDuplicateObjectFromArray(
+          addedMovies,
+          "id"
+        );
+
+        setMovies(removedDupMovies);
       } else {
         setMovies([]);
         setMovies(response);
@@ -174,6 +229,7 @@ export default function MyApp({
   };
 
   // ------------------------ Search Results Filtering & Favourites Filtering ------------------------ //
+
   const handleGenreFilter = (newSelectedGenre) => {
     infiniteScroll && resetInfiniteScroll();
     setSelectedGenre(newSelectedGenre);
@@ -184,24 +240,30 @@ export default function MyApp({
           ? initialFavouriteMovies
           : initialSearchResultMovies;
 
-      // prevent the movies data from being filtered over and over I stored the inital search results in a seperate state to use for every genre filter.
+      // To prevent the movies data from being filtered over and over I stored the inital search results in a seperate state to use for every genre filter.
       const filteredMovies = array.filter((m) => {
         const genreIdsClone = [...m.genre_ids];
         const answer = genreIdsClone.find((id) => id === newSelectedGenre.id);
         return answer;
       });
 
-      // if you filter the movies and there are no movies that match then instead of showing a loading spinner it show's a message saying no movies
+      // if you filter the movies and there are no movies that match, then instead of showing a loading spinner it show's a message saying no movies
       isArrayEmpty(filteredMovies)
         ? setNoSearchResult(false)
         : setNoSearchResult(true);
 
-      // movies are reset to empty to allow for animation
       if (pathname === "/favourites" || pathname === "/favourites/[id]") {
+        // movies are reset to empty to allow for animation
         setFavouriteMovies([]);
         const finalFavMovies = searching
           ? handleSearchFilter(filteredMovies, searchQuery)
           : filteredMovies;
+
+        // this is to indicate that a new genre is being selected on the favourites page and once the favourite movies have
+        // been updated useEffect will catch that update and if the sortBy is either 'Year', 'Top Rated' or 'Title' then filter the movies
+        // based on that parameter.
+        setFavouriteGenreChange(true);
+
         setFavouriteMovies(finalFavMovies);
       } else {
         setMovies([]);
@@ -215,6 +277,12 @@ export default function MyApp({
       const finalFavMovies = searching
         ? handleSearchFilter(initialFavouriteMovies, searchQuery)
         : initialFavouriteMovies;
+
+      // this is to indicate that a new genre is being selected on the favourites page and once the favourite movies have
+      // been updated useEffect will catch that update and if the sortBy is either 'Year', 'Top Rated' or 'Title' then filter the movies
+      // based on that parameter.
+      setFavouriteGenreChange(true);
+
       setFavouriteMovies(finalFavMovies);
     } else {
       // reset search results to initial search results
@@ -235,6 +303,12 @@ export default function MyApp({
     infiniteScroll && resetInfiniteScroll();
     setSelectedSortBy(newSelectedSortBy);
     switch (newSelectedSortBy.title) {
+      case "Trending":
+        handleGetMovies(selectedGenre, newSelectedSortBy);
+        break;
+      case "Popular":
+        handleGetMovies(selectedGenre, newSelectedSortBy);
+        break;
       case "Top Rated":
         handleTopRatedFilter();
         break;
@@ -243,6 +317,9 @@ export default function MyApp({
         break;
       case "Title":
         handleTitleFilter();
+        break;
+      case "Order":
+        handleOrderFilter();
         break;
 
       default:
@@ -314,11 +391,23 @@ export default function MyApp({
   };
 
   const titleFilter = (array) => {
-    // removed this the title function as I needed the sort results return in another function instead of setting state
     const filteredArray = array.sort((a, b) => {
       return a.title.localeCompare(b.title);
     });
     return filteredArray;
+  };
+
+  const handleOrderFilter = () => {
+    const lsFavouriteMovies = window.localStorage.getItem("favouriteMovies");
+
+    if (lsFavouriteMovies) {
+      const favMovies = JSON.parse(lsFavouriteMovies);
+
+      setFavouriteMovies(favMovies);
+      if (selectedGenre.name === "All" && selectedSortBy.title === "Order") {
+        setinitialFavouriteMovies(favMovies);
+      }
+    }
   };
 
   // ------------------------ Movie Item ------------------------ //
@@ -330,12 +419,15 @@ export default function MyApp({
     localStorage.setItem("selectedMovie", JSON.stringify(selectedMovie));
   };
 
+  // ------------------------ Favouriting Movies ------------------------ //
+
   const handleFavouriteSelected = (favMovie, favourited) => {
     if (isArrayEmpty(favouriteMovies)) {
       if (!favourited && favouriteMovies.length <= 300) {
         // add - limit of 300 favourited movies
         const updatedFavMovies = [...favouriteMovies, favMovie];
         setFavouriteMovies(updatedFavMovies);
+        setinitialFavouriteMovies(updatedFavMovies);
         localStorage.setItem(
           "favouriteMovies",
           JSON.stringify(updatedFavMovies)
@@ -347,6 +439,7 @@ export default function MyApp({
         });
 
         setFavouriteMovies(deletedMovieFromFavMovies);
+        setinitialFavouriteMovies(deletedMovieFromFavMovies);
         localStorage.setItem(
           "favouriteMovies",
           JSON.stringify(deletedMovieFromFavMovies)
@@ -439,6 +532,12 @@ export default function MyApp({
     }
   };
 
+  const clearSearch = () => {
+    setSearchQuery("");
+    setSearching(false);
+    setFavouriteMovies(initialFavouriteMovies);
+  };
+
   const handleSearching = () => {
     setSearching(false);
   };
@@ -468,8 +567,10 @@ export default function MyApp({
         noSearchResult,
         searching,
         favouriteMovies,
+        setFavouriteMovies,
         incrementPage,
         selectedGenre,
+        selectedSortBy,
       }}
     >
       <Container ref={ref}>
@@ -483,6 +584,7 @@ export default function MyApp({
           searching={searching}
           handleSearching={handleSearching}
           clearSearchResults={clearSearchResults}
+          clearSearch={clearSearch}
         />
         <CompenentMargin id="main">
           <GlobalStyle />
