@@ -15,6 +15,9 @@ const Header = ({
   handleSelectedSortBy,
   handleSearch,
   handleSearching,
+  getTrendingMovies,
+  infiniteScroll,
+  resetInfiniteScroll,
   genres,
   searching,
   clearSearchResults,
@@ -296,21 +299,25 @@ const Header = ({
 
   // ------------------------ Return to homepage ------------------------ //
 
+  // the function resets the dropdown settings back to default and changes route to the home page
   const handleReturnHomeAndRest = () => {
-    // the function reset the dropdown setting back to default and changes route to the home page
+    // if infiniteScroll is true, this function will reset the page to 1 then request movies
+    if (infiniteScroll && pathname === "/") {
+      infiniteScroll && resetInfiniteScroll();
+      getTrendingMovies(1);
+    } else {
+      setSelectedGenre({ id: null, name: "All" });
+      setSelectedSortBy({ query: "", title: "Trending" });
 
-    setSelectedGenre({ id: null, name: "All" });
-    setSelectedSortBy({ query: "", title: "Trending" });
-
-    // timeout to allow for input exit animation to not lag
-
-    timeout.current = setTimeout(() => {
-      handleGetMovies(
-        { query: null, title: "All" },
-        { query: "", title: "Trending" }
-      );
-      push("/");
-    }, 300);
+      // timeout to allow for input exit animation to not lag
+      timeout.current = setTimeout(() => {
+        handleGetMovies(
+          { query: null, title: "All" },
+          { query: "", title: "Trending" }
+        );
+        push("/");
+      }, 300);
+    }
     closeAndClearInput();
   };
 

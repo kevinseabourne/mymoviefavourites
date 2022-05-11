@@ -582,9 +582,12 @@ export default function MyApp({
           handleGenreFilter={handleGenreFilter}
           handleSelectedSortBy={handleSelectedSortBy}
           searching={searching}
+          getTrendingMovies={getTrendingMovies}
           handleSearching={handleSearching}
           clearSearchResults={clearSearchResults}
           clearSearch={clearSearch}
+          infiniteScroll={infiniteScroll}
+          resetInfiniteScroll={resetInfiniteScroll}
         />
         <CompenentMargin id="main">
           <GlobalStyle />
