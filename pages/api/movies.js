@@ -44,7 +44,7 @@ export async function textSearchMovies(query) {
 
   let moviesArray = data.results;
 
-  // Only Show movies have a vote count higher that 300
+  // Only Show movies that have a vote count higher that 300
   const searchResults = moviesArray.filter((movie) => {
     return movie.vote_count > 300;
   });
@@ -56,7 +56,6 @@ export async function getVideoObject(id) {
   let { data: videoObj } = await http.get(
     `https://api.themoviedb.org/3/movie/${id}/videos?api_key=${process.env.NEXT_PUBLIC_MOVIES_DB_API_KEY}`
   );
-  // This is adding a property to each movie object.
   const movies = videoObj;
   return movies;
 }

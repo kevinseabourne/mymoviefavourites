@@ -303,9 +303,11 @@ const Header = ({
   const handleReturnHomeAndRest = () => {
     // if infiniteScroll is true, this function will reset the page to 1 then request movies
     if (infiniteScroll && pathname === "/") {
+      // Home Page
       infiniteScroll && resetInfiniteScroll();
       getTrendingMovies(1);
     } else {
+      // All other pages
       setSelectedGenre({ id: null, name: "All" });
       setSelectedSortBy({ query: "", title: "Trending" });
 
