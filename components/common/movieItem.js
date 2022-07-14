@@ -289,7 +289,7 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
               color="#D1D5DB"
               edit={false}
             />
-            <DecimalRating>{movie.vote_average}</DecimalRating>
+            <DecimalRating>{movie.vote_average.toFixed(1)}</DecimalRating>
           </MovieRatingContainer>
         )}
       </ImageContainer>
