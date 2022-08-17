@@ -93,6 +93,19 @@ export default function MyApp({
     }
   }, [pathname]);
 
+  useEffect(() => {
+    if (selectedGenre) {
+      if (
+        pathname === "/" &&
+        selectedSortBy.title !== "Trending" &&
+        selectedSortBy !== "Popular"
+      ) {
+        // filter the searched movies based on the sort by parameter
+        handleSelectedSortBy(selectedSortBy);
+      }
+    }
+  }, [selectedGenre, searching, pathname]);
+
   // When favourite movies is updated after changing the order of movies with the drag feature
   // the movies order is then saved in localStorage to preserve the order
 
@@ -505,8 +518,9 @@ export default function MyApp({
         initialFavouriteMovies,
         query
       );
+      const filteredFavMovies = titleFilter(searchedFavMovies);
 
-      setFavouriteMovies(searchedFavMovies);
+      setFavouriteMovies(filteredFavMovies);
     }
   };
 
