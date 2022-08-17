@@ -84,18 +84,6 @@ const Header = ({
     if (pathname === "/[id]") {
       setTitleSortSearchedMovies(false);
     }
-    if (
-      searching &&
-      titleSortSearchedMovies &&
-      pathname === "/" &&
-      movieContentPage !== "/favourites/[id]"
-    ) {
-      setSelectedGenre({ id: null, name: "All" });
-      setSelectedSortBy({ query: "", title: "Order" });
-      handleSelectedSortBy({ query: "", title: "Order" });
-
-      setTitleSortSearchedMovies(true);
-    }
   }, [searching, pathname]);
 
   useEffect(() => {
@@ -175,7 +163,13 @@ const Header = ({
 
     if (searching) {
       if (pathname === "/favourites" || pathname === "/favourites/[id]") {
-        handleFavSortByClick(option);
+        if (option.title === "Order") {
+          // removes the search when clicking the order option of sort by on the favs page
+          closeAndClearInput();
+          handleFavSortByClick(option);
+        } else {
+          handleFavSortByClick(option);
+        }
       } else {
         if (option.title === "Trending" || option.title === "Popular") {
           closeAndClearInput();
@@ -230,16 +224,8 @@ const Header = ({
   const onSubmit = (query) => {
     const { search } = query;
 
-    if (pathname === "/") {
-      setSelectedSortBy({ query: "title.asc", title: "Title" });
-    }
+    setSelectedSortBy({ query: "title.asc", title: "Title" });
 
-    if (searching && selectedGenre.name !== "All") {
-      setSelectedGenre({
-        id: null,
-        name: "All",
-      });
-    }
     search && handleSearch(search);
   };
 
@@ -297,6 +283,12 @@ const Header = ({
     clearSearch();
   };
 
+  const closeAndClearInputE = () => {
+    setInputOpen(false);
+    setValue("search", "");
+    // clearSearch();
+  };
+
   // ------------------------ Return to homepage ------------------------ //
 
   // the function resets the dropdown settings back to default and changes route to the home page
@@ -308,9 +300,9 @@ const Header = ({
       getTrendingMovies(1);
     } else {
       // All other pages
+      closeAndClearInputE();
       setSelectedGenre({ id: null, name: "All" });
       setSelectedSortBy({ query: "", title: "Trending" });
-
       // timeout to allow for input exit animation to not lag
       timeout.current = setTimeout(() => {
         handleGetMovies(
@@ -320,7 +312,6 @@ const Header = ({
         push("/");
       }, 300);
     }
-    closeAndClearInput();
   };
 
   // ------------------------ favourite & About Links ------------------------ //
