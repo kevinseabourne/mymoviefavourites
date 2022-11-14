@@ -13,7 +13,7 @@ This website displays data from the movieDB API. Allowing you to search and filt
 
 ## Features
 
-• Http Requests
+• HTTP Requests
 • Filter Data
 • Search Through Data
 • Add Movies To Favourites
