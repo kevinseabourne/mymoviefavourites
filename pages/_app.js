@@ -52,14 +52,7 @@ export default function MyApp({
   const timeout = useRef(null);
 
   useEffect(() => {
-    const lsFavouriteMovies = window.localStorage.getItem("favouriteMovies");
-
-    if (lsFavouriteMovies) {
-      const favMovies = JSON.parse(lsFavouriteMovies);
-
-      setFavouriteMovies(favMovies);
-      setinitialFavouriteMovies(favMovies);
-    }
+    updatedFavouritesWithLocalStorage();
 
     if (allGenres && allTrendingMovies) {
       const removeDocumentaries = allGenres.filter(
@@ -78,6 +71,8 @@ export default function MyApp({
 
     () => clearTimeout(timeout);
   }, []);
+
+  useEffect(() => {}, [pathname]);
 
   // handle infiniteScroll request, fetch more data when the page changes
   useEffect(() => {
@@ -437,7 +432,7 @@ export default function MyApp({
   const handleFavouriteSelected = (favMovie, favourited) => {
     if (isArrayEmpty(favouriteMovies)) {
       if (!favourited && favouriteMovies.length <= 300) {
-        // add - limit of 300 favourited movies
+        // limit of 300 favourited movies
         const updatedFavMovies = [...favouriteMovies, favMovie];
         setFavouriteMovies(updatedFavMovies);
         setinitialFavouriteMovies(updatedFavMovies);
@@ -462,6 +457,19 @@ export default function MyApp({
       // first movie added to favourites
       setFavouriteMovies([favMovie]);
       localStorage.setItem("favouriteMovies", JSON.stringify([favMovie]));
+    }
+  };
+
+  const updatedFavouritesWithLocalStorage = () => {
+    const lsFavouriteMovies = window.localStorage.getItem("favouriteMovies");
+
+    const favMovies = JSON.parse(lsFavouriteMovies);
+    if (
+      lsFavouriteMovies &&
+      JSON.stringify(favouriteMovies) !== JSON.stringify(favMovies)
+    ) {
+      setFavouriteMovies(favMovies);
+      setinitialFavouriteMovies(favMovies);
     }
   };
 
@@ -585,6 +593,7 @@ export default function MyApp({
         incrementPage,
         selectedGenre,
         selectedSortBy,
+        updatedFavouritesWithLocalStorage,
       }}
     >
       <Container ref={ref}>

@@ -12,6 +12,7 @@ const Favourites = () => {
     favouriteMovies,
     setFavouriteMovies,
     selectedGenre,
+    updatedFavouritesWithLocalStorage,
   } = useContext(AppContext);
 
   const loadingSpinnerRef = useRef(null);
@@ -19,6 +20,7 @@ const Favourites = () => {
 
   useEffect(() => {
     setIsMounted(true);
+    updatedFavouritesWithLocalStorage();
   }, []);
 
   return (
@@ -34,7 +36,9 @@ const Favourites = () => {
           setFavouriteMovies={setFavouriteMovies}
           status={status}
         />
-      ) : isMounted ? (
+      ) : isMounted &&
+        !isArrayEmpty(favouriteMovies) &&
+        status !== "pending" ? (
         <TitleContainer>
           <Title>
             {selectedGenre.name === "All"

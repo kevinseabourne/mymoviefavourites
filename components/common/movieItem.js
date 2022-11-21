@@ -156,7 +156,6 @@ const MovieItem = ({ movie, status, favouriteMovies }) => {
       opacity: 1,
       transition: {
         type: "spring",
-        bounce: 0,
       },
     },
   };
