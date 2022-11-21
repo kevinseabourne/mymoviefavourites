@@ -1,11 +1,10 @@
 # Movie Database Website
 
-This website displays data from the movieDB API. Allowing you to search and filter through thousands of movies on their database. When you find a movie you like, add it to your favourites and with drag and drop functionality, reorder your favourite movies to your liking.
-
+This website displays data from the movieDB API. Allowing you to search and filter through thousands of movies on their database. When you find a movie you like, add it to your favourites, and with drag and drop functionality, reorder your favourite movies to your liking.
 ## Stack
 
 • Next.js
-• Javascript
+• JavaScript
 • Styled Components
 • MovieDB API
 • Axios
@@ -14,7 +13,7 @@ This website displays data from the movieDB API. Allowing you to search and filt
 
 ## Features
 
-• Http Requests
+• HTTP Requests
 • Filter Data
 • Search Through Data
 • Add Movies To Favourites
